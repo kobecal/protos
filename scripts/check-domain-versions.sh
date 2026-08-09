@@ -3,6 +3,7 @@
 set -euo pipefail
 
 base_ref="${SCHEMA_BASE_REF:-master}"
+schemas_root="proto/kobecal"
 
 if [[ ! "$base_ref" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]] || [[ "$base_ref" == *".."* ]]; then
   echo "invalid base ref: $base_ref" >&2
@@ -48,9 +49,21 @@ while IFS= read -r schema_unit; do
   version_file="${domain_dir}/VERSION"
 
   version_changed="$(git diff --name-only --diff-filter=ACDMRT "${base_ref}...HEAD" -- "$version_file" | awk -v expected="$version_file" '$0 == expected { print; exit }')"
-  current_proto="$(find "$domain_dir" -mindepth 2 -maxdepth 2 -type f -name '*.proto' -print | awk 'NR == 1 { print; exit }')"
+  if [[ -d "$domain_dir" ]]; then
+    current_proto="$(find "$domain_dir" -mindepth 2 -maxdepth 2 -type f -name '*.proto' -print | awk 'NR == 1 { print; exit }')"
+  else
+    current_proto=""
+  fi
 
   if [[ -z "$current_proto" ]]; then
+    # Allow a one-time namespace migration (e.g. contracts/agent ->
+    # miniprogram/agent): the domain name must still exist under another
+    # namespace. Genuine deletions keep failing.
+    migrated_to="$(find "$schemas_root" -mindepth 2 -maxdepth 2 -type d -name "$domain" -print | LC_ALL=C sort | awk 'NR == 1 { print; exit }')"
+    if [[ -n "$migrated_to" ]]; then
+      echo "${schema_unit}: moved to ${migrated_to#${schemas_root}/}; migration allowed" >&2
+      continue
+    fi
     echo "${schema_unit}: published schema domains cannot be deleted" >&2
     exit 1
   fi

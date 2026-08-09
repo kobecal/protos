@@ -2,7 +2,7 @@
 
 To add a domain:
 
-1. Choose the owning namespace, such as `contracts`, `infra`, `platform`, or
+1. Choose the owning namespace, such as `miniprogram`, `infra`, `platform`, or
    `product`.
 2. Create `proto/kobecal/<namespace>/<domain>/VERSION` from
    `templates/domain/VERSION`.

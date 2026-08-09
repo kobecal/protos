@@ -5,13 +5,13 @@ Each schema domain is published as an independent nested Go module.
 For schema source:
 
 ```text
-proto/kobecal/contracts/agent/v1/*.proto
+proto/kobecal/miniprogram/agent/v1/*.proto
 ```
 
 the generated module is:
 
 ```text
-gen/go/contracts/agent/
+gen/go/miniprogram/agent/
   go.mod
   go.sum
   v1/*.pb.go
@@ -20,13 +20,13 @@ gen/go/contracts/agent/
 with module path:
 
 ```text
-github.com/kobecal/protos/gen/go/contracts/agent
+github.com/kobecal/protos/gen/go/miniprogram/agent
 ```
 
 The compatible Git tag is therefore:
 
 ```text
-gen/go/contracts/agent/v0.1.0
+gen/go/miniprogram/agent/v0.1.0
 ```
 
 Generated code is committed so the module exists at the tagged repository

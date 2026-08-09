@@ -1,0 +1,65 @@
+// AgentService is the front-door contract for agent runtimes (see agentos).
+syntax = "proto3";
+
+package kobecal.miniprogram.agent.v1;
+
+import "google/api/annotations.proto";
+import "kobecal/miniprogram/common/v1/common.proto";
+
+option go_package = "github.com/kobecal/protos/gen/go/miniprogram/agent/v1;agentv1";
+
+// AgentService runs an agent and exposes a streaming view of its progress.
+service AgentService {
+  // Run executes an agent to completion and returns the final output.
+  rpc Run(RunRequest) returns (RunResponse) {
+    option (google.api.http) = {
+      post: "/v1/agents/{agent_id}:run"
+      body: "*"
+    };
+  }
+
+  // Subscribe streams incremental progress events for a running agent. The
+  // server pushes SubscribeResponse until the agent finishes or the client
+  // disconnects.
+  rpc Subscribe(SubscribeRequest) returns (stream SubscribeResponse) {
+    option (google.api.http) = {get: "/v1/agents/{agent_id}:subscribe"};
+  }
+}
+
+// RunRequest is the input to AgentService.Run.
+message RunRequest {
+  // The agent identifier to run. Required.
+  string agent_id = 1;
+  // Free-form input passed to the agent as the user message.
+  string input = 2;
+  // Optional pagination for multi-turn scenarios.
+  kobecal.miniprogram.common.v1.Pagination pagination = 3;
+}
+
+// RunResponse is the output of AgentService.Run.
+message RunResponse {
+  // Final output produced by the agent.
+  string output = 1;
+  // Server-assigned session id for follow-up calls.
+  string session_id = 2;
+  // The actor that initiated the run.
+  kobecal.miniprogram.common.v1.Actor actor = 3;
+}
+
+// SubscribeRequest is the input to AgentService.Subscribe.
+message SubscribeRequest {
+  // The agent identifier to subscribe to. Required.
+  string agent_id = 1;
+}
+
+// SubscribeResponse is one delta pushed by AgentService.Subscribe.
+message SubscribeResponse {
+  // The agent identifier this event belongs to.
+  string agent_id = 1;
+  // Incremental text delta since the previous event. Empty means
+  // "metadata-only event".
+  string delta = 2;
+  // Monotonically increasing per-stream sequence number. Clients use this to
+  // reorder events after reconnect.
+  int64 sequence = 3;
+}

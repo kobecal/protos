@@ -13,3 +13,8 @@ lint:
 breaking:
   use:
     - PACKAGE
+  # One-time namespace migration (contracts → miniprogram): the old package
+  # tree was removed in the same commit that added its miniprogram equivalent,
+  # so buf's PACKAGE_NO_DELETE must be waived for the legacy paths.
+  ignore:
+    - proto/kobecal/contracts

@@ -8,7 +8,7 @@ Schemas use a two-level ownership boundary:
   v1/*.proto
 ```
 
-For example, shared contracts live under `contracts/<domain>`, while future
+For example, shared contracts live under `miniprogram/<domain>`, while future
 infra, platform, or product schemas may use `infra/<domain>`,
 `platform/<domain>`, or `product/<domain>`.
 

@@ -13,7 +13,7 @@
 # /proto/kobecal/<namespace>/<domain>/ @kobecal/<domain-team>
 
 # Domains migrated from proto-contracts.
-/proto/kobecal/contracts/agent/ @kobecal
-/proto/kobecal/contracts/common/ @kobecal
+/proto/kobecal/miniprogram/agent/ @kobecal
+/proto/kobecal/miniprogram/common/ @kobecal
 # car-parking domain.
-/proto/kobecal/contracts/carparking/ @kobecal
+/proto/kobecal/miniprogram/carparking/ @kobecal

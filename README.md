@@ -22,13 +22,13 @@ Each `<namespace>/<domain>` pair is an independently owned and versioned schema
 unit. For example:
 
 ```text
-proto/kobecal/contracts/agent/VERSION
-proto/kobecal/contracts/agent/v1/agent.proto
+proto/kobecal/miniprogram/agent/VERSION
+proto/kobecal/miniprogram/agent/v1/agent.proto
 ```
 
 Cross-domain imports are allowed only when the dependency direction is
 documented and reviewed by both domain owners. Shared types belong in
-`proto/kobecal/contracts/common` only when their semantics are stable across
+`proto/kobecal/miniprogram/common` only when their semantics are stable across
 domains.
 
 ## Required checks
@@ -68,12 +68,12 @@ After a change reaches `master`, CI creates an annotated Go module tag:
 gen/go/<namespace>/<domain>/v<MAJOR.MINOR.PATCH>
 ```
 
-Example: `gen/go/contracts/agent/v0.1.0`.
+Example: `gen/go/miniprogram/agent/v0.1.0`.
 
 Consumers import the corresponding nested Go module:
 
 ```text
-github.com/kobecal/protos/gen/go/contracts/agent
+github.com/kobecal/protos/gen/go/miniprogram/agent
 ```
 
 See [schema conventions](docs/schema-conventions.md), [versioning](docs/versioning.md),
@@ -83,8 +83,8 @@ See [schema conventions](docs/schema-conventions.md), [versioning](docs/versioni
 ## Migration from proto-contracts
 
 This repository replaces `github.com/kobecal/proto-contracts`. The seed domains
-(`contracts/agent`, `contracts/common`) were migrated with package names
-renamed from `contracts.<domain>.vN` to `kobecal.contracts.<domain>.vN`.
+(`miniprogram/agent`, `miniprogram/common`) were migrated with package names
+renamed from `contracts.<domain>.vN` to `kobecal.miniprogram.<domain>.vN`.
 Consumers must switch their SDK module to
 `github.com/kobecal/protos/gen/go/<namespace>/<domain>` and update package
 imports accordingly. The old repository is deprecated and must not receive new

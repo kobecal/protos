@@ -1,0 +1,39 @@
+// Common messages shared across every service in the kobecal org.
+//
+// Keep this file lean. Domain-specific messages belong in their own
+// `proto/<domain>/v<N>/` package. If a message is only used by one service,
+// do not promote it here.
+syntax = "proto3";
+
+package kobecal.contracts.common.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/kobecal/protos/gen/go/contracts/common/v1;commonv1";
+
+// Pagination is the canonical request envelope for list RPCs.
+message Pagination {
+  // Maximum number of items to return. Zero means "use server default".
+  int32 page_size = 1;
+  // Opaque continuation token from a previous PageInfo.next_page_token. Empty
+  // means "first page".
+  string page_token = 2;
+}
+
+// PageInfo is returned alongside any paginated response.
+message PageInfo {
+  // Continuation token for the next page. Empty means "no more pages".
+  string next_page_token = 1;
+  // Total number of items known at the time of the response. May be
+  // approximate for very large collections.
+  int32 total_size = 2;
+}
+
+// Actor identifies something (user, service account, system component) that
+// initiated or is responsible for a request.
+message Actor {
+  // Stable identifier. For humans, the user id; for services, the service name.
+  string id = 1;
+  // When this actor was first seen.
+  google.protobuf.Timestamp created_at = 2;
+}

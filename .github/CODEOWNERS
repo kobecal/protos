@@ -1,0 +1,19 @@
+# Configure the real repository governance team before enabling branch
+# protection. Do not use placeholder owners in active rules.
+#
+# Example governance rules:
+* @kobecal
+# /.github/ @kobecal/<github-team>
+# /buf.yaml @kobecal/<schema-governance-team>
+# /docs/ @kobecal/<schema-governance-team>
+# /scripts/ @kobecal/<schema-governance-team>
+#
+# Example domain ownership rule. Every domain with a VERSION file must add an
+# active exact-path rule; CI validates this requirement.
+# /proto/kobecal/<namespace>/<domain>/ @kobecal/<domain-team>
+
+# Domains migrated from proto-contracts.
+/proto/kobecal/contracts/agent/ @kobecal
+/proto/kobecal/contracts/common/ @kobecal
+# car-parking domain.
+/proto/kobecal/contracts/carparking/ @kobecal

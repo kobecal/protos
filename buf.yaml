@@ -13,8 +13,8 @@ lint:
 breaking:
   use:
     - PACKAGE
-  # TEMPORARY: pre-release redesign of the carparking contract (field type
-  # changes and removals). Removed by the follow-up commit; do not extend.
+  # One-time namespace migration (contracts → miniprogram): the old package
+  # tree was removed in the same commit that added its miniprogram equivalent,
+  # so buf's PACKAGE_NO_DELETE must be waived for the legacy paths.
   ignore:
     - proto/kobecal/contracts
-    - proto/kobecal/miniprogram/carparking

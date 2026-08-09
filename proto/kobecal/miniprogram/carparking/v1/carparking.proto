@@ -19,14 +19,16 @@ service CarParkingService {
     option (google.api.http) = {get: "/v1/ping"};
   }
 
-  // ListNearbyParkingLots returns approved parking lots near the caller's
-  // location, sorted by distance. Lots with outdated reports are demoted.
+  // ListNearbyParkingLots returns approved, enabled parking lots near the
+  // caller's location, sorted by distance. Lots with outdated reports are
+  // demoted.
   rpc ListNearbyParkingLots(ListNearbyParkingLotsRequest) returns (ListNearbyParkingLotsResponse) {
-    option (google.api.http) = {get: "/v1/parking-lots"};
+    option (google.api.http) = {get: "/v1/parking-lots:nearby"};
   }
 
   // GetParkingLot returns one parking lot. Pending and rejected lots are only
-  // visible to their submitter (and reviewers).
+  // visible to their submitter (and reviewers); disabled lots are only visible
+  // to their submitter and users who favorited them.
   rpc GetParkingLot(GetParkingLotRequest) returns (GetParkingLotResponse) {
     option (google.api.http) = {get: "/v1/parking-lots/{parking_lot_id}"};
   }
@@ -40,19 +42,33 @@ service CarParkingService {
     };
   }
 
-  // UpdateParkingLot updates a parking lot owned by the caller. Only pending
-  // or rejected lots can be edited; editing resubmits the lot for review.
+  // UpdateParkingLot fully replaces a parking lot owned by the caller. Only
+  // pending or rejected lots can be edited; editing resubmits the lot for
+  // review and resets its outdated_report_count.
   rpc UpdateParkingLot(UpdateParkingLotRequest) returns (UpdateParkingLotResponse) {
     option (google.api.http) = {
-      patch: "/v1/parking-lots/{parking_lot_id}"
+      put: "/v1/parking-lots/{parking_lot_id}"
       body: "*"
     };
+  }
+
+  // DeleteParkingLot deletes a parking lot owned by the caller. Only pending
+  // or rejected lots can be deleted; approved lots must be disabled by an
+  // admin instead.
+  rpc DeleteParkingLot(DeleteParkingLotRequest) returns (DeleteParkingLotResponse) {
+    option (google.api.http) = {delete: "/v1/parking-lots/{parking_lot_id}"};
   }
 
   // ListMyParkingLots lists the caller's submissions, including lots awaiting
   // review or rejected.
   rpc ListMyParkingLots(ListMyParkingLotsRequest) returns (ListMyParkingLotsResponse) {
     option (google.api.http) = {get: "/v1/my/parking-lots"};
+  }
+
+  // ListParkingLotsForReview lists submissions for the admin review queue,
+  // newest first. Admin only.
+  rpc ListParkingLotsForReview(ListParkingLotsForReviewRequest) returns (ListParkingLotsForReviewResponse) {
+    option (google.api.http) = {get: "/v1/admin/parking-lots:for-review"};
   }
 
   // ReviewParkingLot approves or rejects a pending submission. Admin only.
@@ -94,6 +110,12 @@ service CarParkingService {
       body: "*"
     };
   }
+
+  // ListOutdatedReports lists parking lots with outstanding outdated reports
+  // so admins can verify and resolve them. Admin only.
+  rpc ListOutdatedReports(ListOutdatedReportsRequest) returns (ListOutdatedReportsResponse) {
+    option (google.api.http) = {get: "/v1/admin/outdated-reports"};
+  }
 }
 
 // PingRequest is the input to Ping.
@@ -105,7 +127,7 @@ message PingResponse {
   string message = 1;
 }
 
-// ParkingLotStatus is the review state of a parking lot.
+// ParkingLotStatus is the lifecycle state of a parking lot.
 enum ParkingLotStatus {
   // PARKING_LOT_STATUS_UNSPECIFIED is the default value; it is never used for
   // a real parking lot.
@@ -119,9 +141,28 @@ enum ParkingLotStatus {
   // PARKING_LOT_STATUS_REJECTED means the lot was rejected and is only visible
   // to its submitter.
   PARKING_LOT_STATUS_REJECTED = 3;
+  // PARKING_LOT_STATUS_DISABLED means the lot was taken offline (closed,
+  // verified as outdated, or moderated). It no longer appears in public
+  // discovery; it remains visible to its submitter and to users who favorited
+  // it.
+  PARKING_LOT_STATUS_DISABLED = 4;
 }
 
-// ParkingLot is a parking lot that can be discovered, favorited, and reviewed.
+// ReviewDecision is the reviewer's decision for a pending submission.
+enum ReviewDecision {
+  // REVIEW_DECISION_UNSPECIFIED is the default value; it is never used for a
+  // real decision.
+  REVIEW_DECISION_UNSPECIFIED = 0;
+  // REVIEW_DECISION_APPROVE publishes the submission.
+  REVIEW_DECISION_APPROVE = 1;
+  // REVIEW_DECISION_REJECT rejects the submission; review_comment is
+  // required.
+  REVIEW_DECISION_REJECT = 2;
+}
+
+// ParkingLot is the domain entity of a parking lot: immutable facts plus
+// server-maintained state. Per-request view data (distance, per-caller flags)
+// lives in ParkingLotView instead.
 message ParkingLot {
   // id is the stable identifier of the parking lot.
   string id = 1;
@@ -139,7 +180,7 @@ message ParkingLot {
   repeated string price_image_urls = 7;
   // payment_qr_image_urls point to payment QR code images accepted at the lot.
   repeated string payment_qr_image_urls = 8;
-  // status is the current review state of the parking lot.
+  // status is the current lifecycle state of the parking lot.
   ParkingLotStatus status = 9;
   // review_comment explains a rejection; empty for approved and pending lots.
   string review_comment = 10;
@@ -147,22 +188,32 @@ message ParkingLot {
   string submitter_id = 11;
   // created_at is when the parking lot was created.
   google.protobuf.Timestamp created_at = 12;
-  // updated_at is when the parking lot was last updated.
+  // updated_at is when the parking lot was last updated. Updating a disabled
+  // or approved lot's content is not allowed; a resubmitted lot's content
+  // update also refreshes this timestamp.
   google.protobuf.Timestamp updated_at = 13;
   // outdated_report_count is the number of users that reported this lot as
-  // outdated.
+  // outdated. It resets to zero when the submitter updates the content.
   int32 outdated_report_count = 14;
+}
+
+// ParkingLotView wraps a parking lot with request-context data: distance from
+// the caller's location and per-caller flags. It is the response payload for
+// discovery and list RPCs; the wrapped ParkingLot carries domain fields only.
+message ParkingLotView {
+  // parking_lot is the parking lot entity.
+  ParkingLot parking_lot = 1;
+  // distance_m is the distance from the caller's location; only set for
+  // nearby-list responses.
+  double distance_m = 2;
   // flagged_outdated is true when the lot has at least one outdated report;
   // the frontend shows a "verify before use" hint when set.
-  bool flagged_outdated = 15;
+  bool flagged_outdated = 3;
+  // favorited_by_me is true when the caller has favorited this lot.
+  bool favorited_by_me = 4;
   // outdated_reported_by_me is true when the caller already reported this lot
   // as outdated.
-  bool outdated_reported_by_me = 16;
-  // favorited_by_me is true when the caller has favorited this lot.
-  bool favorited_by_me = 17;
-  // distance_m is the distance from the caller's location; only set in nearby
-  // list responses.
-  double distance_m = 18;
+  bool outdated_reported_by_me = 5;
 }
 
 // ParkingLotDraft is the user-editable content of a parking lot, used when
@@ -202,7 +253,7 @@ message ListNearbyParkingLotsRequest {
 message ListNearbyParkingLotsResponse {
   // parking_lots is the page of nearby lots sorted by distance, with lots
   // that have outdated reports demoted.
-  repeated ParkingLot parking_lots = 1;
+  repeated ParkingLotView parking_lots = 1;
   // page_info carries pagination metadata.
   kobecal.miniprogram.common.v1.PageInfo page_info = 2;
 }
@@ -215,8 +266,8 @@ message GetParkingLotRequest {
 
 // GetParkingLotResponse is the output of GetParkingLot.
 message GetParkingLotResponse {
-  // parking_lot is the requested parking lot.
-  ParkingLot parking_lot = 1;
+  // parking_lot is the requested parking lot view. distance_m is unset.
+  ParkingLotView parking_lot = 1;
 }
 
 // CreateParkingLotRequest is the input to CreateParkingLot.
@@ -241,9 +292,19 @@ message UpdateParkingLotRequest {
 
 // UpdateParkingLotResponse is the output of UpdateParkingLot.
 message UpdateParkingLotResponse {
-  // parking_lot is the updated lot, resubmitted for review.
+  // parking_lot is the updated lot, resubmitted for review with its
+  // outdated_report_count reset.
   ParkingLot parking_lot = 1;
 }
+
+// DeleteParkingLotRequest is the input to DeleteParkingLot.
+message DeleteParkingLotRequest {
+  // parking_lot_id is the identifier of the lot to delete. Required.
+  string parking_lot_id = 1;
+}
+
+// DeleteParkingLotResponse is the output of DeleteParkingLot.
+message DeleteParkingLotResponse {}
 
 // ListMyParkingLotsRequest is the input to ListMyParkingLots.
 message ListMyParkingLotsRequest {
@@ -254,6 +315,23 @@ message ListMyParkingLotsRequest {
 // ListMyParkingLotsResponse is the output of ListMyParkingLots.
 message ListMyParkingLotsResponse {
   // parking_lots is the caller's submissions, newest first.
+  repeated ParkingLotView parking_lots = 1;
+  // page_info carries pagination metadata.
+  kobecal.miniprogram.common.v1.PageInfo page_info = 2;
+}
+
+// ListParkingLotsForReviewRequest is the input to ListParkingLotsForReview.
+message ListParkingLotsForReviewRequest {
+  // status filters the queue by lifecycle state. Unspecified means
+  // PENDING_REVIEW, the default queue view.
+  ParkingLotStatus status = 1;
+  // pagination controls page size and continuation.
+  kobecal.miniprogram.common.v1.Pagination pagination = 2;
+}
+
+// ListParkingLotsForReviewResponse is the output of ListParkingLotsForReview.
+message ListParkingLotsForReviewResponse {
+  // parking_lots is the review queue page, newest first.
   repeated ParkingLot parking_lots = 1;
   // page_info carries pagination metadata.
   kobecal.miniprogram.common.v1.PageInfo page_info = 2;
@@ -263,8 +341,8 @@ message ListMyParkingLotsResponse {
 message ReviewParkingLotRequest {
   // parking_lot_id is the identifier of the lot to review. Required.
   string parking_lot_id = 1;
-  // status is the reviewer decision; APPROVED or REJECTED. Required.
-  ParkingLotStatus status = 2;
+  // decision is the reviewer decision; APPROVE or REJECT. Required.
+  ReviewDecision decision = 2;
   // review_comment explains the decision and is required for rejection.
   string review_comment = 3;
 }
@@ -283,8 +361,9 @@ message FavoriteParkingLotRequest {
 
 // FavoriteParkingLotResponse is the output of FavoriteParkingLot.
 message FavoriteParkingLotResponse {
-  // parking_lot is the favorited lot.
-  ParkingLot parking_lot = 1;
+  // favorited is true when the lot is favorited by the caller after this
+  // call; repeated favorites are idempotent.
+  bool favorited = 1;
 }
 
 // UnfavoriteParkingLotRequest is the input to UnfavoriteParkingLot.
@@ -302,17 +381,15 @@ message ListFavoriteParkingLotsRequest {
   kobecal.miniprogram.common.v1.Pagination pagination = 1;
 }
 
-// ListFavoriteParkingLotsResponse is the output of
-// ListFavoriteParkingLots.
+// ListFavoriteParkingLotsResponse is the output of ListFavoriteParkingLots.
 message ListFavoriteParkingLotsResponse {
   // parking_lots is the caller's favorite lots, newest favorite first.
-  repeated ParkingLot parking_lots = 1;
+  repeated ParkingLotView parking_lots = 1;
   // page_info carries pagination metadata.
   kobecal.miniprogram.common.v1.PageInfo page_info = 2;
 }
 
-// ReportParkingLotOutdatedRequest is the input to
-// ReportParkingLotOutdated.
+// ReportParkingLotOutdatedRequest is the input to ReportParkingLotOutdated.
 message ReportParkingLotOutdatedRequest {
   // parking_lot_id is the identifier of the lot being reported. Required.
   string parking_lot_id = 1;
@@ -321,7 +398,34 @@ message ReportParkingLotOutdatedRequest {
 // ReportParkingLotOutdatedResponse is the output of
 // ReportParkingLotOutdated.
 message ReportParkingLotOutdatedResponse {
-  // parking_lot is the updated lot; outdated_report_count and
-  // flagged_outdated reflect the report.
+  // already_reported is true when the caller had already reported this lot;
+  // repeat reports do not increment the count.
+  bool already_reported = 1;
+  // outdated_report_count is the updated report count.
+  int32 outdated_report_count = 2;
+}
+
+// ListOutdatedReportsRequest is the input to ListOutdatedReports. Admin only.
+message ListOutdatedReportsRequest {
+  // pagination controls page size and continuation.
+  kobecal.miniprogram.common.v1.Pagination pagination = 1;
+}
+
+// ListOutdatedReportsResponse is the output of ListOutdatedReports.
+message ListOutdatedReportsResponse {
+  // outdated_reports is the page of outstanding reports, newest first.
+  repeated OutdatedReport outdated_reports = 1;
+  // page_info carries pagination metadata.
+  kobecal.miniprogram.common.v1.PageInfo page_info = 2;
+}
+
+// OutdatedReport is one outstanding outdated-information report on a parking
+// lot.
+message OutdatedReport {
+  // parking_lot is the reported lot.
   ParkingLot parking_lot = 1;
+  // reporter_id is the user who submitted the report.
+  string reporter_id = 2;
+  // reported_at is when the report was submitted.
+  google.protobuf.Timestamp reported_at = 3;
 }

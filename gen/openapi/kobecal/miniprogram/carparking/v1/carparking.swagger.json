@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "miniprogram/carparking",
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "tags": [
     {
@@ -16,6 +16,89 @@
     "application/json"
   ],
   "paths": {
+    "/v1/admin/outdated-reports": {
+      "get": {
+        "summary": "ListOutdatedReports lists parking lots with outstanding outdated reports\nso admins can verify and resolve them. Admin only.",
+        "operationId": "CarParkingService_ListOutdatedReports",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListOutdatedReportsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "pagination.page_size",
+            "description": "Maximum number of items to return. Zero means \"use server default\".",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "pagination.page_token",
+            "description": "Opaque continuation token from a previous PageInfo.next_page_token. Empty\nmeans \"first page\".",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CarParkingService"
+        ]
+      }
+    },
+    "/v1/admin/parking-lots:for-review": {
+      "get": {
+        "summary": "ListParkingLotsForReview lists submissions for the admin review queue,\nnewest first. Admin only.",
+        "operationId": "CarParkingService_ListParkingLotsForReview",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListParkingLotsForReviewResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "status",
+            "description": "status filters the queue by lifecycle state. Unspecified means\nPENDING_REVIEW, the default queue view.\n\n - PARKING_LOT_STATUS_UNSPECIFIED: PARKING_LOT_STATUS_UNSPECIFIED is the default value; it is never used for\na real parking lot.\n - PARKING_LOT_STATUS_PENDING_REVIEW: PARKING_LOT_STATUS_PENDING_REVIEW means the lot was submitted and awaits\nreview.\n - PARKING_LOT_STATUS_APPROVED: PARKING_LOT_STATUS_APPROVED means the lot passed review and is publicly\nvisible.\n - PARKING_LOT_STATUS_REJECTED: PARKING_LOT_STATUS_REJECTED means the lot was rejected and is only visible\nto its submitter.\n - PARKING_LOT_STATUS_DISABLED: PARKING_LOT_STATUS_DISABLED means the lot was taken offline (closed,\nverified as outdated, or moderated). It no longer appears in public\ndiscovery; it remains visible to its submitter and to users who favorited\nit.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "PARKING_LOT_STATUS_UNSPECIFIED",
+              "PARKING_LOT_STATUS_PENDING_REVIEW",
+              "PARKING_LOT_STATUS_APPROVED",
+              "PARKING_LOT_STATUS_REJECTED",
+              "PARKING_LOT_STATUS_DISABLED"
+            ],
+            "default": "PARKING_LOT_STATUS_UNSPECIFIED"
+          },
+          {
+            "name": "pagination.page_size",
+            "description": "Maximum number of items to return. Zero means \"use server default\".",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "pagination.page_token",
+            "description": "Opaque continuation token from a previous PageInfo.next_page_token. Empty\nmeans \"first page\".",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CarParkingService"
+        ]
+      }
+    },
     "/v1/favorites/parking-lots": {
       "get": {
         "summary": "ListFavoriteParkingLots lists the caller's favorite parking lots, newest\nfavorite first.",
@@ -85,54 +168,6 @@
       }
     },
     "/v1/parking-lots": {
-      "get": {
-        "summary": "ListNearbyParkingLots returns approved parking lots near the caller's\nlocation, sorted by distance. Lots with outdated reports are demoted.",
-        "operationId": "CarParkingService_ListNearbyParkingLots",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1ListNearbyParkingLotsResponse"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "latitude",
-            "description": "latitude is the caller's WGS-84 latitude used as the search anchor.\nRequired.",
-            "in": "query",
-            "required": false,
-            "type": "number",
-            "format": "double"
-          },
-          {
-            "name": "longitude",
-            "description": "longitude is the caller's WGS-84 longitude used as the search anchor.\nRequired.",
-            "in": "query",
-            "required": false,
-            "type": "number",
-            "format": "double"
-          },
-          {
-            "name": "pagination.page_size",
-            "description": "Maximum number of items to return. Zero means \"use server default\".",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "pagination.page_token",
-            "description": "Opaque continuation token from a previous PageInfo.next_page_token. Empty\nmeans \"first page\".",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "CarParkingService"
-        ]
-      },
       "post": {
         "summary": "CreateParkingLot submits a new parking lot for review. The lot is only\nvisible to the submitter until a reviewer approves it.",
         "operationId": "CarParkingService_CreateParkingLot",
@@ -162,7 +197,7 @@
     },
     "/v1/parking-lots/{parking_lot_id}": {
       "get": {
-        "summary": "GetParkingLot returns one parking lot. Pending and rejected lots are only\nvisible to their submitter (and reviewers).",
+        "summary": "GetParkingLot returns one parking lot. Pending and rejected lots are only\nvisible to their submitter (and reviewers); disabled lots are only visible\nto their submitter and users who favorited them.",
         "operationId": "CarParkingService_GetParkingLot",
         "responses": {
           "200": {
@@ -185,8 +220,32 @@
           "CarParkingService"
         ]
       },
-      "patch": {
-        "summary": "UpdateParkingLot updates a parking lot owned by the caller. Only pending\nor rejected lots can be edited; editing resubmits the lot for review.",
+      "delete": {
+        "summary": "DeleteParkingLot deletes a parking lot owned by the caller. Only pending\nor rejected lots can be deleted; approved lots must be disabled by an\nadmin instead.",
+        "operationId": "CarParkingService_DeleteParkingLot",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteParkingLotResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "parking_lot_id",
+            "description": "parking_lot_id is the identifier of the lot to delete. Required.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CarParkingService"
+        ]
+      },
+      "put": {
+        "summary": "UpdateParkingLot fully replaces a parking lot owned by the caller. Only\npending or rejected lots can be edited; editing resubmits the lot for\nreview and resets its outdated_report_count.",
         "operationId": "CarParkingService_UpdateParkingLot",
         "responses": {
           "200": {
@@ -354,6 +413,56 @@
         ]
       }
     },
+    "/v1/parking-lots:nearby": {
+      "get": {
+        "summary": "ListNearbyParkingLots returns approved, enabled parking lots near the\ncaller's location, sorted by distance. Lots with outdated reports are\ndemoted.",
+        "operationId": "CarParkingService_ListNearbyParkingLots",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListNearbyParkingLotsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "latitude",
+            "description": "latitude is the caller's WGS-84 latitude used as the search anchor.\nRequired.",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "name": "longitude",
+            "description": "longitude is the caller's WGS-84 longitude used as the search anchor.\nRequired.",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          },
+          {
+            "name": "pagination.page_size",
+            "description": "Maximum number of items to return. Zero means \"use server default\".",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "pagination.page_token",
+            "description": "Opaque continuation token from a previous PageInfo.next_page_token. Empty\nmeans \"first page\".",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "CarParkingService"
+        ]
+      }
+    },
     "/v1/ping": {
       "get": {
         "summary": "Ping returns a liveness response.",
@@ -379,14 +488,14 @@
     },
     "CarParkingServiceReportParkingLotOutdatedBody": {
       "type": "object",
-      "description": "ReportParkingLotOutdatedRequest is the input to\nReportParkingLotOutdated."
+      "description": "ReportParkingLotOutdatedRequest is the input to ReportParkingLotOutdated."
     },
     "CarParkingServiceReviewParkingLotBody": {
       "type": "object",
       "properties": {
-        "status": {
-          "$ref": "#/definitions/v1ParkingLotStatus",
-          "description": "status is the reviewer decision; APPROVED or REJECTED. Required."
+        "decision": {
+          "$ref": "#/definitions/v1ReviewDecision",
+          "description": "decision is the reviewer decision; APPROVE or REJECT. Required."
         },
         "review_comment": {
           "type": "string",
@@ -429,12 +538,16 @@
       },
       "description": "CreateParkingLotResponse is the output of CreateParkingLot."
     },
+    "v1DeleteParkingLotResponse": {
+      "type": "object",
+      "description": "DeleteParkingLotResponse is the output of DeleteParkingLot."
+    },
     "v1FavoriteParkingLotResponse": {
       "type": "object",
       "properties": {
-        "parking_lot": {
-          "$ref": "#/definitions/v1ParkingLot",
-          "description": "parking_lot is the favorited lot."
+        "favorited": {
+          "type": "boolean",
+          "description": "favorited is true when the lot is favorited by the caller after this\ncall; repeated favorites are idempotent."
         }
       },
       "description": "FavoriteParkingLotResponse is the output of FavoriteParkingLot."
@@ -443,8 +556,8 @@
       "type": "object",
       "properties": {
         "parking_lot": {
-          "$ref": "#/definitions/v1ParkingLot",
-          "description": "parking_lot is the requested parking lot."
+          "$ref": "#/definitions/v1ParkingLotView",
+          "description": "parking_lot is the requested parking lot view. distance_m is unset."
         }
       },
       "description": "GetParkingLotResponse is the output of GetParkingLot."
@@ -456,7 +569,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1ParkingLot"
+            "$ref": "#/definitions/v1ParkingLotView"
           },
           "description": "parking_lots is the caller's favorite lots, newest favorite first."
         },
@@ -465,7 +578,7 @@
           "description": "page_info carries pagination metadata."
         }
       },
-      "description": "ListFavoriteParkingLotsResponse is the output of\nListFavoriteParkingLots."
+      "description": "ListFavoriteParkingLotsResponse is the output of ListFavoriteParkingLots."
     },
     "v1ListMyParkingLotsResponse": {
       "type": "object",
@@ -474,7 +587,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1ParkingLot"
+            "$ref": "#/definitions/v1ParkingLotView"
           },
           "description": "parking_lots is the caller's submissions, newest first."
         },
@@ -492,7 +605,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1ParkingLot"
+            "$ref": "#/definitions/v1ParkingLotView"
           },
           "description": "parking_lots is the page of nearby lots sorted by distance, with lots\nthat have outdated reports demoted."
         },
@@ -502,6 +615,61 @@
         }
       },
       "description": "ListNearbyParkingLotsResponse is the output of ListNearbyParkingLots."
+    },
+    "v1ListOutdatedReportsResponse": {
+      "type": "object",
+      "properties": {
+        "outdated_reports": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1OutdatedReport"
+          },
+          "description": "outdated_reports is the page of outstanding reports, newest first."
+        },
+        "page_info": {
+          "$ref": "#/definitions/v1PageInfo",
+          "description": "page_info carries pagination metadata."
+        }
+      },
+      "description": "ListOutdatedReportsResponse is the output of ListOutdatedReports."
+    },
+    "v1ListParkingLotsForReviewResponse": {
+      "type": "object",
+      "properties": {
+        "parking_lots": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ParkingLot"
+          },
+          "description": "parking_lots is the review queue page, newest first."
+        },
+        "page_info": {
+          "$ref": "#/definitions/v1PageInfo",
+          "description": "page_info carries pagination metadata."
+        }
+      },
+      "description": "ListParkingLotsForReviewResponse is the output of ListParkingLotsForReview."
+    },
+    "v1OutdatedReport": {
+      "type": "object",
+      "properties": {
+        "parking_lot": {
+          "$ref": "#/definitions/v1ParkingLot",
+          "description": "parking_lot is the reported lot."
+        },
+        "reporter_id": {
+          "type": "string",
+          "description": "reporter_id is the user who submitted the report."
+        },
+        "reported_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "reported_at is when the report was submitted."
+        }
+      },
+      "description": "OutdatedReport is one outstanding outdated-information report on a parking\nlot."
     },
     "v1PageInfo": {
       "type": "object",
@@ -578,7 +746,7 @@
         },
         "status": {
           "$ref": "#/definitions/v1ParkingLotStatus",
-          "description": "status is the current review state of the parking lot."
+          "description": "status is the current lifecycle state of the parking lot."
         },
         "review_comment": {
           "type": "string",
@@ -596,32 +764,15 @@
         "updated_at": {
           "type": "string",
           "format": "date-time",
-          "description": "updated_at is when the parking lot was last updated."
+          "description": "updated_at is when the parking lot was last updated. Updating a disabled\nor approved lot's content is not allowed; a resubmitted lot's content\nupdate also refreshes this timestamp."
         },
         "outdated_report_count": {
           "type": "integer",
           "format": "int32",
-          "description": "outdated_report_count is the number of users that reported this lot as\noutdated."
-        },
-        "flagged_outdated": {
-          "type": "boolean",
-          "description": "flagged_outdated is true when the lot has at least one outdated report;\nthe frontend shows a \"verify before use\" hint when set."
-        },
-        "outdated_reported_by_me": {
-          "type": "boolean",
-          "description": "outdated_reported_by_me is true when the caller already reported this lot\nas outdated."
-        },
-        "favorited_by_me": {
-          "type": "boolean",
-          "description": "favorited_by_me is true when the caller has favorited this lot."
-        },
-        "distance_m": {
-          "type": "number",
-          "format": "double",
-          "description": "distance_m is the distance from the caller's location; only set in nearby\nlist responses."
+          "description": "outdated_report_count is the number of users that reported this lot as\noutdated. It resets to zero when the submitter updates the content."
         }
       },
-      "description": "ParkingLot is a parking lot that can be discovered, favorited, and reviewed."
+      "description": "ParkingLot is the domain entity of a parking lot: immutable facts plus\nserver-maintained state. Per-request view data (distance, per-caller flags)\nlives in ParkingLotView instead."
     },
     "v1ParkingLotDraft": {
       "type": "object",
@@ -671,10 +822,38 @@
         "PARKING_LOT_STATUS_UNSPECIFIED",
         "PARKING_LOT_STATUS_PENDING_REVIEW",
         "PARKING_LOT_STATUS_APPROVED",
-        "PARKING_LOT_STATUS_REJECTED"
+        "PARKING_LOT_STATUS_REJECTED",
+        "PARKING_LOT_STATUS_DISABLED"
       ],
       "default": "PARKING_LOT_STATUS_UNSPECIFIED",
-      "description": "ParkingLotStatus is the review state of a parking lot.\n\n - PARKING_LOT_STATUS_UNSPECIFIED: PARKING_LOT_STATUS_UNSPECIFIED is the default value; it is never used for\na real parking lot.\n - PARKING_LOT_STATUS_PENDING_REVIEW: PARKING_LOT_STATUS_PENDING_REVIEW means the lot was submitted and awaits\nreview.\n - PARKING_LOT_STATUS_APPROVED: PARKING_LOT_STATUS_APPROVED means the lot passed review and is publicly\nvisible.\n - PARKING_LOT_STATUS_REJECTED: PARKING_LOT_STATUS_REJECTED means the lot was rejected and is only visible\nto its submitter."
+      "description": "ParkingLotStatus is the lifecycle state of a parking lot.\n\n - PARKING_LOT_STATUS_UNSPECIFIED: PARKING_LOT_STATUS_UNSPECIFIED is the default value; it is never used for\na real parking lot.\n - PARKING_LOT_STATUS_PENDING_REVIEW: PARKING_LOT_STATUS_PENDING_REVIEW means the lot was submitted and awaits\nreview.\n - PARKING_LOT_STATUS_APPROVED: PARKING_LOT_STATUS_APPROVED means the lot passed review and is publicly\nvisible.\n - PARKING_LOT_STATUS_REJECTED: PARKING_LOT_STATUS_REJECTED means the lot was rejected and is only visible\nto its submitter.\n - PARKING_LOT_STATUS_DISABLED: PARKING_LOT_STATUS_DISABLED means the lot was taken offline (closed,\nverified as outdated, or moderated). It no longer appears in public\ndiscovery; it remains visible to its submitter and to users who favorited\nit."
+    },
+    "v1ParkingLotView": {
+      "type": "object",
+      "properties": {
+        "parking_lot": {
+          "$ref": "#/definitions/v1ParkingLot",
+          "description": "parking_lot is the parking lot entity."
+        },
+        "distance_m": {
+          "type": "number",
+          "format": "double",
+          "description": "distance_m is the distance from the caller's location; only set for\nnearby-list responses."
+        },
+        "flagged_outdated": {
+          "type": "boolean",
+          "description": "flagged_outdated is true when the lot has at least one outdated report;\nthe frontend shows a \"verify before use\" hint when set."
+        },
+        "favorited_by_me": {
+          "type": "boolean",
+          "description": "favorited_by_me is true when the caller has favorited this lot."
+        },
+        "outdated_reported_by_me": {
+          "type": "boolean",
+          "description": "outdated_reported_by_me is true when the caller already reported this lot\nas outdated."
+        }
+      },
+      "description": "ParkingLotView wraps a parking lot with request-context data: distance from\nthe caller's location and per-caller flags. It is the response payload for\ndiscovery and list RPCs; the wrapped ParkingLot carries domain fields only."
     },
     "v1PingResponse": {
       "type": "object",
@@ -689,12 +868,27 @@
     "v1ReportParkingLotOutdatedResponse": {
       "type": "object",
       "properties": {
-        "parking_lot": {
-          "$ref": "#/definitions/v1ParkingLot",
-          "description": "parking_lot is the updated lot; outdated_report_count and\nflagged_outdated reflect the report."
+        "already_reported": {
+          "type": "boolean",
+          "description": "already_reported is true when the caller had already reported this lot;\nrepeat reports do not increment the count."
+        },
+        "outdated_report_count": {
+          "type": "integer",
+          "format": "int32",
+          "description": "outdated_report_count is the updated report count."
         }
       },
       "description": "ReportParkingLotOutdatedResponse is the output of\nReportParkingLotOutdated."
+    },
+    "v1ReviewDecision": {
+      "type": "string",
+      "enum": [
+        "REVIEW_DECISION_UNSPECIFIED",
+        "REVIEW_DECISION_APPROVE",
+        "REVIEW_DECISION_REJECT"
+      ],
+      "default": "REVIEW_DECISION_UNSPECIFIED",
+      "description": "ReviewDecision is the reviewer's decision for a pending submission.\n\n - REVIEW_DECISION_UNSPECIFIED: REVIEW_DECISION_UNSPECIFIED is the default value; it is never used for a\nreal decision.\n - REVIEW_DECISION_APPROVE: REVIEW_DECISION_APPROVE publishes the submission.\n - REVIEW_DECISION_REJECT: REVIEW_DECISION_REJECT rejects the submission; review_comment is\nrequired."
     },
     "v1ReviewParkingLotResponse": {
       "type": "object",
@@ -715,7 +909,7 @@
       "properties": {
         "parking_lot": {
           "$ref": "#/definitions/v1ParkingLot",
-          "description": "parking_lot is the updated lot, resubmitted for review."
+          "description": "parking_lot is the updated lot, resubmitted for review with its\noutdated_report_count reset."
         }
       },
       "description": "UpdateParkingLotResponse is the output of UpdateParkingLot."

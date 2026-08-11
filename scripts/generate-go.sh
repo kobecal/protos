@@ -78,7 +78,11 @@ while IFS= read -r version_file; do
       fi
       go mod edit -replace="${dep_module}=${dep_path}"
       echo "${relative_unit}: replaced ${dep_module} with ${dep_path}"
-    done < <(rg -o 'import "kobecal/[^"]+"' --no-filename --glob '*.proto' "${ROOT}/proto/kobecal/${namespace}/${domain}" | sed 's/^import "//; s/"$//' | sort -u)
+    # Scan the domain's proto imports for other kobecal packages and point
+    # them at their local sibling module. Use find+grep (not ripgrep): the
+    # CI runners do not install rg, and a missing tool in the process
+    # substitution would silently skip the replace directives.
+    done < <(find "${ROOT}/proto/kobecal/${namespace}/${domain}" -type f -name '*.proto' -exec grep -hoE 'import "kobecal/[^"]+"' {} + | sed 's/^import "//; s/"$//' | sort -u)
   )
 done < <(find "$schemas_root" -mindepth 3 -maxdepth 3 -type f -name VERSION -print | LC_ALL=C sort)
 

@@ -25,9 +25,9 @@ Example:
 ```protobuf
 syntax = "proto3";
 
-package kobecal.miniprogram.agent.v1;
+package kobecal.miniprogram.carparking.v1;
 
-option go_package = "github.com/kobecal/protos/gen/go/miniprogram/agent/v1;agentv1";
+option go_package = "github.com/kobecal/protos/gen/go/miniprogram/carparking/v1;carparkingv1";
 ```
 
 ## Compatibility

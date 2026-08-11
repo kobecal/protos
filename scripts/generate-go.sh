@@ -5,9 +5,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 protoc_gen_go_version="1.36.11"
+protoc_gen_go_grpc_version="1.5.1"
+protoc_gen_grpc_gateway_version="2.29.0"
 protobuf_runtime_version="1.36.11"
 google_api_annotations_version="0.0.0-20241104194629-dd2ea8efbc28"
-generated_go_version="1.24.0"
+generated_go_version="1.26.0"
 schemas_root="proto/kobecal"
 
 first_schema="$(find "$schemas_root" -type f -name '*.proto' -print | awk 'NR == 1 { print; exit }')"
@@ -19,6 +21,19 @@ fi
 actual_version="$(protoc-gen-go --version 2>/dev/null || true)"
 if [[ "$actual_version" != "protoc-gen-go v${protoc_gen_go_version}" ]]; then
   echo "protoc-gen-go v${protoc_gen_go_version} is required" >&2
+  exit 1
+fi
+
+actual_version="$(protoc-gen-go-grpc --version 2>/dev/null || true)"
+if [[ "$actual_version" != "protoc-gen-go-grpc ${protoc_gen_go_grpc_version}" ]]; then
+  echo "protoc-gen-go-grpc ${protoc_gen_go_grpc_version} is required" >&2
+  exit 1
+fi
+
+actual_version="$(protoc-gen-grpc-gateway --version 2>/dev/null || true)"
+expected_version_prefix="Version v${protoc_gen_grpc_gateway_version},"
+if [[ "$actual_version" != "$expected_version_prefix"* ]]; then
+  echo "protoc-gen-grpc-gateway v${protoc_gen_grpc_gateway_version} is required" >&2
   exit 1
 fi
 

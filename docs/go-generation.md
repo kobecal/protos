@@ -38,7 +38,7 @@ Tool versions:
 - Buf: `1.72.0`
 - `protoc-gen-go`: `1.36.11`
 - `protoc-gen-openapiv2`: `2.29.0`
-- generated module Go directive: `1.24.0`
+- generated module Go directive: `1.26.0`
 - protobuf Go runtime: `1.36.11`
 
 External Proto dependencies must be declared in `buf.yaml` and pinned in

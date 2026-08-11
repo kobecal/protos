@@ -18,3 +18,6 @@ breaking:
   # so buf's PACKAGE_NO_DELETE must be waived for the legacy paths.
   ignore:
     - proto/kobecal/contracts
+    # Deliberate retirement: miniprogram/agent was unused by any consumer and
+    # was removed from the repository.
+    - proto/kobecal/miniprogram/agent

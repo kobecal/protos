@@ -5,6 +5,12 @@ set -euo pipefail
 base_ref="${SCHEMA_BASE_REF:-master}"
 schemas_root="proto/kobecal"
 
+# Published domains that were deliberately retired. Deleting a published
+# domain is normally rejected by this policy; entries here acknowledge the
+# removal as a governance decision. Remove an entry once the domain is gone
+# from the base ref for good.
+retired_domains="miniprogram/agent"
+
 if [[ ! "$base_ref" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]] || [[ "$base_ref" == *".."* ]]; then
   echo "invalid base ref: $base_ref" >&2
   exit 1
@@ -56,12 +62,16 @@ while IFS= read -r schema_unit; do
   fi
 
   if [[ -z "$current_proto" ]]; then
-    # Allow a one-time namespace migration (e.g. contracts/agent ->
-    # miniprogram/agent): the domain name must still exist under another
+    # Allow a one-time namespace migration (e.g. contracts/car-parking ->
+    # miniprogram/car-parking): the domain name must still exist under another
     # namespace. Genuine deletions keep failing.
     migrated_to="$(find "$schemas_root" -mindepth 2 -maxdepth 2 -type d -name "$domain" -print | LC_ALL=C sort | awk 'NR == 1 { print; exit }')"
     if [[ -n "$migrated_to" ]]; then
       echo "${schema_unit}: moved to ${migrated_to#${schemas_root}/}; migration allowed" >&2
+      continue
+    fi
+    if grep -qxF "$schema_unit" <<< "$retired_domains"; then
+      echo "${schema_unit}: retired; deletion acknowledged by governance" >&2
       continue
     fi
     echo "${schema_unit}: published schema domains cannot be deleted" >&2

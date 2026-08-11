@@ -7,12 +7,9 @@ documents with the gRPC-Gateway `protoc-gen-openapiv2` plugin.
 For example:
 
 ```protobuf
-service AgentService {
-  rpc Run(RunRequest) returns (RunResponse) {
-    option (google.api.http) = {
-      post: "/v1/agents/{agent_id}:run"
-      body: "*"
-    };
+service CarParkingService {
+  rpc GetParkingLot(GetParkingLotRequest) returns (GetParkingLotResponse) {
+    option (google.api.http) = {get: "/v1/parking-lots/{parking_lot_id}"};
   }
 }
 ```
@@ -31,7 +28,7 @@ paths, and response references.
 One document is generated per service-bearing schema file:
 
 ```text
-gen/openapi/agent.swagger.json
+gen/openapi/kobecal/miniprogram/carparking/v1/carparking.swagger.json
 ```
 
 The document's `info.version` must match the owning domain's `VERSION`.

@@ -16,28 +16,53 @@ option go_package = "github.com/kobecal/protos/gen/go/miniprogram/carparking/v1;
 service CarParkingService {
   // Ping returns a liveness response.
   rpc Ping(PingRequest) returns (PingResponse) {
-    option (google.api.http) = {get: "/v1/ping"};
+    option (google.api.http) = {get: "/car-parking/v1/ping"};
   }
 
   // ListNearbyParkingLots returns approved, enabled parking lots near the
   // caller's location, sorted by distance. Lots with outdated reports are
   // demoted.
   rpc ListNearbyParkingLots(ListNearbyParkingLotsRequest) returns (ListNearbyParkingLotsResponse) {
-    option (google.api.http) = {get: "/v1/parking-lots:nearby"};
+    option (google.api.http) = {get: "/car-parking/v1/parking-lots:nearby"};
+  }
+
+  // CheckCachedParkingLots is the lightweight staleness probe for the mini
+  // program's local parking-lot cache. The client sends a snapshot of the
+  // lots it cached (id + last-known updated_at); the server returns only the
+  // ids whose cached copy is no longer current (content changed, or the lot
+  // no longer exists), so the client can drop or refresh them. This keeps
+  // the transfer tiny even with 100 cached lots.
+  rpc CheckCachedParkingLots(CheckCachedParkingLotsRequest) returns (CheckCachedParkingLotsResponse) {
+    option (google.api.http) = {
+      post: "/car-parking/v1/parking-lots:check-cached"
+      body: "*"
+    };
+  }
+
+  // ReverseGeocode resolves a coordinate pair into a human-readable parking
+  // lot location (POI name, address, city). The server holds the geocoding
+  // service credentials; the mini program only sends its coordinates, so the
+  // key never leaves the backend.
+  rpc ReverseGeocode(ReverseGeocodeRequest) returns (ReverseGeocodeResponse) {
+    option (google.api.http) = {
+      post: "/car-parking/v1/geocode:reverse"
+      body: "*"
+    };
   }
 
   // GetParkingLot returns one parking lot. Pending and rejected lots are only
   // visible to their submitter (and reviewers); disabled lots are only visible
   // to their submitter and users who favorited them.
   rpc GetParkingLot(GetParkingLotRequest) returns (GetParkingLotResponse) {
-    option (google.api.http) = {get: "/v1/parking-lots/{parking_lot_id}"};
+    option (google.api.http) = {get: "/car-parking/v1/parking-lots/{parking_lot_id}"};
   }
 
-  // CreateParkingLot submits a new parking lot for review. The lot is only
-  // visible to the submitter until a reviewer approves it.
+  // CreateParkingLot submits a new parking lot for review. The lot is
+  // immediately usable by its submitter and becomes publicly visible once a
+  // reviewer approves it.
   rpc CreateParkingLot(CreateParkingLotRequest) returns (CreateParkingLotResponse) {
     option (google.api.http) = {
-      post: "/v1/parking-lots"
+      post: "/car-parking/v1/parking-lots"
       body: "*"
     };
   }
@@ -47,7 +72,7 @@ service CarParkingService {
   // review and resets its outdated_report_count.
   rpc UpdateParkingLot(UpdateParkingLotRequest) returns (UpdateParkingLotResponse) {
     option (google.api.http) = {
-      put: "/v1/parking-lots/{parking_lot_id}"
+      put: "/car-parking/v1/parking-lots/{parking_lot_id}"
       body: "*"
     };
   }
@@ -56,25 +81,25 @@ service CarParkingService {
   // or rejected lots can be deleted; approved lots must be disabled by an
   // admin instead.
   rpc DeleteParkingLot(DeleteParkingLotRequest) returns (DeleteParkingLotResponse) {
-    option (google.api.http) = {delete: "/v1/parking-lots/{parking_lot_id}"};
+    option (google.api.http) = {delete: "/car-parking/v1/parking-lots/{parking_lot_id}"};
   }
 
   // ListMyParkingLots lists the caller's submissions, including lots awaiting
   // review or rejected.
   rpc ListMyParkingLots(ListMyParkingLotsRequest) returns (ListMyParkingLotsResponse) {
-    option (google.api.http) = {get: "/v1/my/parking-lots"};
+    option (google.api.http) = {get: "/car-parking/v1/my/parking-lots"};
   }
 
   // ListParkingLotsForReview lists submissions for the admin review queue,
   // newest first. Admin only.
   rpc ListParkingLotsForReview(ListParkingLotsForReviewRequest) returns (ListParkingLotsForReviewResponse) {
-    option (google.api.http) = {get: "/v1/admin/parking-lots:for-review"};
+    option (google.api.http) = {get: "/car-parking/v1/admin/parking-lots:for-review"};
   }
 
   // ReviewParkingLot approves or rejects a pending submission. Admin only.
   rpc ReviewParkingLot(ReviewParkingLotRequest) returns (ReviewParkingLotResponse) {
     option (google.api.http) = {
-      post: "/v1/parking-lots/{parking_lot_id}:review"
+      post: "/car-parking/v1/parking-lots/{parking_lot_id}:review"
       body: "*"
     };
   }
@@ -82,7 +107,7 @@ service CarParkingService {
   // FavoriteParkingLot adds an approved parking lot to the caller's favorites.
   rpc FavoriteParkingLot(FavoriteParkingLotRequest) returns (FavoriteParkingLotResponse) {
     option (google.api.http) = {
-      post: "/v1/parking-lots/{parking_lot_id}:favorite"
+      post: "/car-parking/v1/parking-lots/{parking_lot_id}:favorite"
       body: "*"
     };
   }
@@ -90,7 +115,7 @@ service CarParkingService {
   // UnfavoriteParkingLot removes a parking lot from the caller's favorites.
   rpc UnfavoriteParkingLot(UnfavoriteParkingLotRequest) returns (UnfavoriteParkingLotResponse) {
     option (google.api.http) = {
-      post: "/v1/parking-lots/{parking_lot_id}:unfavorite"
+      post: "/car-parking/v1/parking-lots/{parking_lot_id}:unfavorite"
       body: "*"
     };
   }
@@ -98,7 +123,7 @@ service CarParkingService {
   // ListFavoriteParkingLots lists the caller's favorite parking lots, newest
   // favorite first.
   rpc ListFavoriteParkingLots(ListFavoriteParkingLotsRequest) returns (ListFavoriteParkingLotsResponse) {
-    option (google.api.http) = {get: "/v1/favorites/parking-lots"};
+    option (google.api.http) = {get: "/car-parking/v1/favorites/parking-lots"};
   }
 
   // ReportParkingLotOutdated reports that an approved parking lot's
@@ -106,7 +131,7 @@ service CarParkingService {
   // the lot in nearby listings and surface a warning to other users.
   rpc ReportParkingLotOutdated(ReportParkingLotOutdatedRequest) returns (ReportParkingLotOutdatedResponse) {
     option (google.api.http) = {
-      post: "/v1/parking-lots/{parking_lot_id}:report-outdated"
+      post: "/car-parking/v1/parking-lots/{parking_lot_id}:report-outdated"
       body: "*"
     };
   }
@@ -114,7 +139,7 @@ service CarParkingService {
   // ListOutdatedReports lists parking lots with outstanding outdated reports
   // so admins can verify and resolve them. Admin only.
   rpc ListOutdatedReports(ListOutdatedReportsRequest) returns (ListOutdatedReportsResponse) {
-    option (google.api.http) = {get: "/v1/admin/outdated-reports"};
+    option (google.api.http) = {get: "/car-parking/v1/admin/outdated-reports"};
   }
 }
 
@@ -195,6 +220,10 @@ message ParkingLot {
   // outdated_report_count is the number of users that reported this lot as
   // outdated. It resets to zero when the submitter updates the content.
   int32 outdated_report_count = 14;
+  // city is the city where the parking lot is located; every address is
+  // required to carry one so the mini program can filter its local cache to
+  // the user's current city without a server round-trip.
+  string city = 15;
 }
 
 // ParkingLotView wraps a parking lot with request-context data: distance from
@@ -214,6 +243,9 @@ message ParkingLotView {
   // outdated_reported_by_me is true when the caller already reported this lot
   // as outdated.
   bool outdated_reported_by_me = 5;
+  // owned_by_me is true when the caller submitted this parking lot; the
+  // frontend uses it to offer edit/remove actions on the caller's own lots.
+  bool owned_by_me = 6;
 }
 
 // ParkingLotDraft is the user-editable content of a parking lot, used when
@@ -230,11 +262,15 @@ message ParkingLotDraft {
   // cover_image_url is an optional cover image.
   string cover_image_url = 5;
   // price_image_urls point to images showing the pricing and charging rules.
-  // At least one is required.
+  // Optional; at least one of price_image_urls and payment_qr_image_urls is
+  // required.
   repeated string price_image_urls = 6;
   // payment_qr_image_urls point to payment QR code images accepted at the lot.
-  // At least one is required.
+  // Optional; at least one of price_image_urls and payment_qr_image_urls is
+  // required.
   repeated string payment_qr_image_urls = 7;
+  // city is the city where the parking lot is located. Required.
+  string city = 8;
 }
 
 // ListNearbyParkingLotsRequest is the input to ListNearbyParkingLots.
@@ -256,6 +292,47 @@ message ListNearbyParkingLotsResponse {
   repeated ParkingLotView parking_lots = 1;
   // page_info carries pagination metadata.
   kobecal.miniprogram.common.v1.PageInfo page_info = 2;
+}
+
+// CheckCachedParkingLotsRequest carries the client's cache snapshot.
+message CheckCachedParkingLotsRequest {
+  // cached_lots is the client's cached lots (id + last-known updated_at).
+  // At most 200 refs are accepted; extra refs are dropped.
+  repeated CachedParkingLot cached_lots = 1;
+}
+
+// CachedParkingLot is one entry of the client's local cache snapshot.
+message CachedParkingLot {
+  // parking_lot_id is the cached lot's id. Required.
+  string parking_lot_id = 1;
+  // updated_at is the cached lot's last-known updated_at. Required.
+  google.protobuf.Timestamp updated_at = 2;
+}
+
+// CheckCachedParkingLotsResponse is the output of CheckCachedParkingLots.
+message CheckCachedParkingLotsResponse {
+  // stale_parking_lot_ids lists the cached lot ids whose copy is no longer
+  // current: the lot no longer exists, or its updated_at differs from the
+  // client's snapshot. Lots not listed are still current and can be kept.
+  repeated string stale_parking_lot_ids = 1;
+}
+
+// ReverseGeocodeRequest is the input to ReverseGeocode.
+message ReverseGeocodeRequest {
+  // latitude is the WGS-84 latitude of the query point. Required.
+  double latitude = 1;
+  // longitude is the WGS-84 longitude of the query point. Required.
+  double longitude = 2;
+}
+
+// ReverseGeocodeResponse is the output of ReverseGeocode.
+message ReverseGeocodeResponse {
+  // name is a nearby POI / place name suggested for the parking lot.
+  string name = 1;
+  // address is the human-readable address of the query point.
+  string address = 2;
+  // city is the city the query point belongs to.
+  string city = 3;
 }
 
 // GetParkingLotRequest is the input to GetParkingLot.

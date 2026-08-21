@@ -270,8 +270,12 @@ type ParkingLot struct {
 	// outdated_report_count is the number of users that reported this lot as
 	// outdated. It resets to zero when the submitter updates the content.
 	OutdatedReportCount int32 `protobuf:"varint,14,opt,name=outdated_report_count,json=outdatedReportCount,proto3" json:"outdated_report_count,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	// city is the city where the parking lot is located; every address is
+	// required to carry one so the mini program can filter its local cache to
+	// the user's current city without a server round-trip.
+	City          string `protobuf:"bytes,15,opt,name=city,proto3" json:"city,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ParkingLot) Reset() {
@@ -402,6 +406,13 @@ func (x *ParkingLot) GetOutdatedReportCount() int32 {
 	return 0
 }
 
+func (x *ParkingLot) GetCity() string {
+	if x != nil {
+		return x.City
+	}
+	return ""
+}
+
 // ParkingLotView wraps a parking lot with request-context data: distance from
 // the caller's location and per-caller flags. It is the response payload for
 // discovery and list RPCs; the wrapped ParkingLot carries domain fields only.
@@ -420,8 +431,11 @@ type ParkingLotView struct {
 	// outdated_reported_by_me is true when the caller already reported this lot
 	// as outdated.
 	OutdatedReportedByMe bool `protobuf:"varint,5,opt,name=outdated_reported_by_me,json=outdatedReportedByMe,proto3" json:"outdated_reported_by_me,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// owned_by_me is true when the caller submitted this parking lot; the
+	// frontend uses it to offer edit/remove actions on the caller's own lots.
+	OwnedByMe     bool `protobuf:"varint,6,opt,name=owned_by_me,json=ownedByMe,proto3" json:"owned_by_me,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ParkingLotView) Reset() {
@@ -489,6 +503,13 @@ func (x *ParkingLotView) GetOutdatedReportedByMe() bool {
 	return false
 }
 
+func (x *ParkingLotView) GetOwnedByMe() bool {
+	if x != nil {
+		return x.OwnedByMe
+	}
+	return false
+}
+
 // ParkingLotDraft is the user-editable content of a parking lot, used when
 // creating or updating a submission.
 type ParkingLotDraft struct {
@@ -504,13 +525,17 @@ type ParkingLotDraft struct {
 	// cover_image_url is an optional cover image.
 	CoverImageUrl string `protobuf:"bytes,5,opt,name=cover_image_url,json=coverImageUrl,proto3" json:"cover_image_url,omitempty"`
 	// price_image_urls point to images showing the pricing and charging rules.
-	// At least one is required.
+	// Optional; at least one of price_image_urls and payment_qr_image_urls is
+	// required.
 	PriceImageUrls []string `protobuf:"bytes,6,rep,name=price_image_urls,json=priceImageUrls,proto3" json:"price_image_urls,omitempty"`
 	// payment_qr_image_urls point to payment QR code images accepted at the lot.
-	// At least one is required.
+	// Optional; at least one of price_image_urls and payment_qr_image_urls is
+	// required.
 	PaymentQrImageUrls []string `protobuf:"bytes,7,rep,name=payment_qr_image_urls,json=paymentQrImageUrls,proto3" json:"payment_qr_image_urls,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// city is the city where the parking lot is located. Required.
+	City          string `protobuf:"bytes,8,opt,name=city,proto3" json:"city,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ParkingLotDraft) Reset() {
@@ -590,6 +615,13 @@ func (x *ParkingLotDraft) GetPaymentQrImageUrls() []string {
 		return x.PaymentQrImageUrls
 	}
 	return nil
+}
+
+func (x *ParkingLotDraft) GetCity() string {
+	if x != nil {
+		return x.City
+	}
+	return ""
 }
 
 // ListNearbyParkingLotsRequest is the input to ListNearbyParkingLots.
@@ -714,6 +746,275 @@ func (x *ListNearbyParkingLotsResponse) GetPageInfo() *v1.PageInfo {
 	return nil
 }
 
+// CheckCachedParkingLotsRequest carries the client's cache snapshot.
+type CheckCachedParkingLotsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// cached_lots is the client's cached lots (id + last-known updated_at).
+	// At most 200 refs are accepted; extra refs are dropped.
+	CachedLots    []*CachedParkingLot `protobuf:"bytes,1,rep,name=cached_lots,json=cachedLots,proto3" json:"cached_lots,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckCachedParkingLotsRequest) Reset() {
+	*x = CheckCachedParkingLotsRequest{}
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckCachedParkingLotsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckCachedParkingLotsRequest) ProtoMessage() {}
+
+func (x *CheckCachedParkingLotsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckCachedParkingLotsRequest.ProtoReflect.Descriptor instead.
+func (*CheckCachedParkingLotsRequest) Descriptor() ([]byte, []int) {
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *CheckCachedParkingLotsRequest) GetCachedLots() []*CachedParkingLot {
+	if x != nil {
+		return x.CachedLots
+	}
+	return nil
+}
+
+// CachedParkingLot is one entry of the client's local cache snapshot.
+type CachedParkingLot struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// parking_lot_id is the cached lot's id. Required.
+	ParkingLotId string `protobuf:"bytes,1,opt,name=parking_lot_id,json=parkingLotId,proto3" json:"parking_lot_id,omitempty"`
+	// updated_at is the cached lot's last-known updated_at. Required.
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CachedParkingLot) Reset() {
+	*x = CachedParkingLot{}
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CachedParkingLot) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CachedParkingLot) ProtoMessage() {}
+
+func (x *CachedParkingLot) ProtoReflect() protoreflect.Message {
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CachedParkingLot.ProtoReflect.Descriptor instead.
+func (*CachedParkingLot) Descriptor() ([]byte, []int) {
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *CachedParkingLot) GetParkingLotId() string {
+	if x != nil {
+		return x.ParkingLotId
+	}
+	return ""
+}
+
+func (x *CachedParkingLot) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
+}
+
+// CheckCachedParkingLotsResponse is the output of CheckCachedParkingLots.
+type CheckCachedParkingLotsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// stale_parking_lot_ids lists the cached lot ids whose copy is no longer
+	// current: the lot no longer exists, or its updated_at differs from the
+	// client's snapshot. Lots not listed are still current and can be kept.
+	StaleParkingLotIds []string `protobuf:"bytes,1,rep,name=stale_parking_lot_ids,json=staleParkingLotIds,proto3" json:"stale_parking_lot_ids,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *CheckCachedParkingLotsResponse) Reset() {
+	*x = CheckCachedParkingLotsResponse{}
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckCachedParkingLotsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckCachedParkingLotsResponse) ProtoMessage() {}
+
+func (x *CheckCachedParkingLotsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckCachedParkingLotsResponse.ProtoReflect.Descriptor instead.
+func (*CheckCachedParkingLotsResponse) Descriptor() ([]byte, []int) {
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *CheckCachedParkingLotsResponse) GetStaleParkingLotIds() []string {
+	if x != nil {
+		return x.StaleParkingLotIds
+	}
+	return nil
+}
+
+// ReverseGeocodeRequest is the input to ReverseGeocode.
+type ReverseGeocodeRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// latitude is the WGS-84 latitude of the query point. Required.
+	Latitude float64 `protobuf:"fixed64,1,opt,name=latitude,proto3" json:"latitude,omitempty"`
+	// longitude is the WGS-84 longitude of the query point. Required.
+	Longitude     float64 `protobuf:"fixed64,2,opt,name=longitude,proto3" json:"longitude,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReverseGeocodeRequest) Reset() {
+	*x = ReverseGeocodeRequest{}
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReverseGeocodeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReverseGeocodeRequest) ProtoMessage() {}
+
+func (x *ReverseGeocodeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReverseGeocodeRequest.ProtoReflect.Descriptor instead.
+func (*ReverseGeocodeRequest) Descriptor() ([]byte, []int) {
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ReverseGeocodeRequest) GetLatitude() float64 {
+	if x != nil {
+		return x.Latitude
+	}
+	return 0
+}
+
+func (x *ReverseGeocodeRequest) GetLongitude() float64 {
+	if x != nil {
+		return x.Longitude
+	}
+	return 0
+}
+
+// ReverseGeocodeResponse is the output of ReverseGeocode.
+type ReverseGeocodeResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// name is a nearby POI / place name suggested for the parking lot.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// address is the human-readable address of the query point.
+	Address string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
+	// city is the city the query point belongs to.
+	City          string `protobuf:"bytes,3,opt,name=city,proto3" json:"city,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReverseGeocodeResponse) Reset() {
+	*x = ReverseGeocodeResponse{}
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReverseGeocodeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReverseGeocodeResponse) ProtoMessage() {}
+
+func (x *ReverseGeocodeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReverseGeocodeResponse.ProtoReflect.Descriptor instead.
+func (*ReverseGeocodeResponse) Descriptor() ([]byte, []int) {
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ReverseGeocodeResponse) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ReverseGeocodeResponse) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+func (x *ReverseGeocodeResponse) GetCity() string {
+	if x != nil {
+		return x.City
+	}
+	return ""
+}
+
 // GetParkingLotRequest is the input to GetParkingLot.
 type GetParkingLotRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -725,7 +1026,7 @@ type GetParkingLotRequest struct {
 
 func (x *GetParkingLotRequest) Reset() {
 	*x = GetParkingLotRequest{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[7]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -737,7 +1038,7 @@ func (x *GetParkingLotRequest) String() string {
 func (*GetParkingLotRequest) ProtoMessage() {}
 
 func (x *GetParkingLotRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[7]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -750,7 +1051,7 @@ func (x *GetParkingLotRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetParkingLotRequest.ProtoReflect.Descriptor instead.
 func (*GetParkingLotRequest) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{7}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetParkingLotRequest) GetParkingLotId() string {
@@ -771,7 +1072,7 @@ type GetParkingLotResponse struct {
 
 func (x *GetParkingLotResponse) Reset() {
 	*x = GetParkingLotResponse{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[8]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -783,7 +1084,7 @@ func (x *GetParkingLotResponse) String() string {
 func (*GetParkingLotResponse) ProtoMessage() {}
 
 func (x *GetParkingLotResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[8]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -796,7 +1097,7 @@ func (x *GetParkingLotResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetParkingLotResponse.ProtoReflect.Descriptor instead.
 func (*GetParkingLotResponse) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{8}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetParkingLotResponse) GetParkingLot() *ParkingLotView {
@@ -817,7 +1118,7 @@ type CreateParkingLotRequest struct {
 
 func (x *CreateParkingLotRequest) Reset() {
 	*x = CreateParkingLotRequest{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[9]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -829,7 +1130,7 @@ func (x *CreateParkingLotRequest) String() string {
 func (*CreateParkingLotRequest) ProtoMessage() {}
 
 func (x *CreateParkingLotRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[9]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -842,7 +1143,7 @@ func (x *CreateParkingLotRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateParkingLotRequest.ProtoReflect.Descriptor instead.
 func (*CreateParkingLotRequest) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{9}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *CreateParkingLotRequest) GetParkingLot() *ParkingLotDraft {
@@ -863,7 +1164,7 @@ type CreateParkingLotResponse struct {
 
 func (x *CreateParkingLotResponse) Reset() {
 	*x = CreateParkingLotResponse{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[10]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -875,7 +1176,7 @@ func (x *CreateParkingLotResponse) String() string {
 func (*CreateParkingLotResponse) ProtoMessage() {}
 
 func (x *CreateParkingLotResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[10]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -888,7 +1189,7 @@ func (x *CreateParkingLotResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateParkingLotResponse.ProtoReflect.Descriptor instead.
 func (*CreateParkingLotResponse) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{10}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *CreateParkingLotResponse) GetParkingLot() *ParkingLot {
@@ -911,7 +1212,7 @@ type UpdateParkingLotRequest struct {
 
 func (x *UpdateParkingLotRequest) Reset() {
 	*x = UpdateParkingLotRequest{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[11]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -923,7 +1224,7 @@ func (x *UpdateParkingLotRequest) String() string {
 func (*UpdateParkingLotRequest) ProtoMessage() {}
 
 func (x *UpdateParkingLotRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[11]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -936,7 +1237,7 @@ func (x *UpdateParkingLotRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateParkingLotRequest.ProtoReflect.Descriptor instead.
 func (*UpdateParkingLotRequest) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{11}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *UpdateParkingLotRequest) GetParkingLotId() string {
@@ -965,7 +1266,7 @@ type UpdateParkingLotResponse struct {
 
 func (x *UpdateParkingLotResponse) Reset() {
 	*x = UpdateParkingLotResponse{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[12]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -977,7 +1278,7 @@ func (x *UpdateParkingLotResponse) String() string {
 func (*UpdateParkingLotResponse) ProtoMessage() {}
 
 func (x *UpdateParkingLotResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[12]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -990,7 +1291,7 @@ func (x *UpdateParkingLotResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateParkingLotResponse.ProtoReflect.Descriptor instead.
 func (*UpdateParkingLotResponse) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{12}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *UpdateParkingLotResponse) GetParkingLot() *ParkingLot {
@@ -1011,7 +1312,7 @@ type DeleteParkingLotRequest struct {
 
 func (x *DeleteParkingLotRequest) Reset() {
 	*x = DeleteParkingLotRequest{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[13]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1023,7 +1324,7 @@ func (x *DeleteParkingLotRequest) String() string {
 func (*DeleteParkingLotRequest) ProtoMessage() {}
 
 func (x *DeleteParkingLotRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[13]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1036,7 +1337,7 @@ func (x *DeleteParkingLotRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteParkingLotRequest.ProtoReflect.Descriptor instead.
 func (*DeleteParkingLotRequest) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{13}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *DeleteParkingLotRequest) GetParkingLotId() string {
@@ -1055,7 +1356,7 @@ type DeleteParkingLotResponse struct {
 
 func (x *DeleteParkingLotResponse) Reset() {
 	*x = DeleteParkingLotResponse{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[14]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1067,7 +1368,7 @@ func (x *DeleteParkingLotResponse) String() string {
 func (*DeleteParkingLotResponse) ProtoMessage() {}
 
 func (x *DeleteParkingLotResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[14]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1080,7 +1381,7 @@ func (x *DeleteParkingLotResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteParkingLotResponse.ProtoReflect.Descriptor instead.
 func (*DeleteParkingLotResponse) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{14}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{19}
 }
 
 // ListMyParkingLotsRequest is the input to ListMyParkingLots.
@@ -1094,7 +1395,7 @@ type ListMyParkingLotsRequest struct {
 
 func (x *ListMyParkingLotsRequest) Reset() {
 	*x = ListMyParkingLotsRequest{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[15]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1106,7 +1407,7 @@ func (x *ListMyParkingLotsRequest) String() string {
 func (*ListMyParkingLotsRequest) ProtoMessage() {}
 
 func (x *ListMyParkingLotsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[15]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1119,7 +1420,7 @@ func (x *ListMyParkingLotsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMyParkingLotsRequest.ProtoReflect.Descriptor instead.
 func (*ListMyParkingLotsRequest) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{15}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ListMyParkingLotsRequest) GetPagination() *v1.Pagination {
@@ -1142,7 +1443,7 @@ type ListMyParkingLotsResponse struct {
 
 func (x *ListMyParkingLotsResponse) Reset() {
 	*x = ListMyParkingLotsResponse{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[16]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1154,7 +1455,7 @@ func (x *ListMyParkingLotsResponse) String() string {
 func (*ListMyParkingLotsResponse) ProtoMessage() {}
 
 func (x *ListMyParkingLotsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[16]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1167,7 +1468,7 @@ func (x *ListMyParkingLotsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMyParkingLotsResponse.ProtoReflect.Descriptor instead.
 func (*ListMyParkingLotsResponse) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{16}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ListMyParkingLotsResponse) GetParkingLots() []*ParkingLotView {
@@ -1198,7 +1499,7 @@ type ListParkingLotsForReviewRequest struct {
 
 func (x *ListParkingLotsForReviewRequest) Reset() {
 	*x = ListParkingLotsForReviewRequest{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[17]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1210,7 +1511,7 @@ func (x *ListParkingLotsForReviewRequest) String() string {
 func (*ListParkingLotsForReviewRequest) ProtoMessage() {}
 
 func (x *ListParkingLotsForReviewRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[17]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1223,7 +1524,7 @@ func (x *ListParkingLotsForReviewRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListParkingLotsForReviewRequest.ProtoReflect.Descriptor instead.
 func (*ListParkingLotsForReviewRequest) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{17}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ListParkingLotsForReviewRequest) GetStatus() ParkingLotStatus {
@@ -1253,7 +1554,7 @@ type ListParkingLotsForReviewResponse struct {
 
 func (x *ListParkingLotsForReviewResponse) Reset() {
 	*x = ListParkingLotsForReviewResponse{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[18]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1265,7 +1566,7 @@ func (x *ListParkingLotsForReviewResponse) String() string {
 func (*ListParkingLotsForReviewResponse) ProtoMessage() {}
 
 func (x *ListParkingLotsForReviewResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[18]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1278,7 +1579,7 @@ func (x *ListParkingLotsForReviewResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListParkingLotsForReviewResponse.ProtoReflect.Descriptor instead.
 func (*ListParkingLotsForReviewResponse) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{18}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ListParkingLotsForReviewResponse) GetParkingLots() []*ParkingLot {
@@ -1310,7 +1611,7 @@ type ReviewParkingLotRequest struct {
 
 func (x *ReviewParkingLotRequest) Reset() {
 	*x = ReviewParkingLotRequest{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[19]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1322,7 +1623,7 @@ func (x *ReviewParkingLotRequest) String() string {
 func (*ReviewParkingLotRequest) ProtoMessage() {}
 
 func (x *ReviewParkingLotRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[19]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1335,7 +1636,7 @@ func (x *ReviewParkingLotRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReviewParkingLotRequest.ProtoReflect.Descriptor instead.
 func (*ReviewParkingLotRequest) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{19}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ReviewParkingLotRequest) GetParkingLotId() string {
@@ -1370,7 +1671,7 @@ type ReviewParkingLotResponse struct {
 
 func (x *ReviewParkingLotResponse) Reset() {
 	*x = ReviewParkingLotResponse{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[20]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1382,7 +1683,7 @@ func (x *ReviewParkingLotResponse) String() string {
 func (*ReviewParkingLotResponse) ProtoMessage() {}
 
 func (x *ReviewParkingLotResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[20]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1395,7 +1696,7 @@ func (x *ReviewParkingLotResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReviewParkingLotResponse.ProtoReflect.Descriptor instead.
 func (*ReviewParkingLotResponse) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{20}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ReviewParkingLotResponse) GetParkingLot() *ParkingLot {
@@ -1416,7 +1717,7 @@ type FavoriteParkingLotRequest struct {
 
 func (x *FavoriteParkingLotRequest) Reset() {
 	*x = FavoriteParkingLotRequest{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[21]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1428,7 +1729,7 @@ func (x *FavoriteParkingLotRequest) String() string {
 func (*FavoriteParkingLotRequest) ProtoMessage() {}
 
 func (x *FavoriteParkingLotRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[21]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1441,7 +1742,7 @@ func (x *FavoriteParkingLotRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FavoriteParkingLotRequest.ProtoReflect.Descriptor instead.
 func (*FavoriteParkingLotRequest) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{21}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *FavoriteParkingLotRequest) GetParkingLotId() string {
@@ -1463,7 +1764,7 @@ type FavoriteParkingLotResponse struct {
 
 func (x *FavoriteParkingLotResponse) Reset() {
 	*x = FavoriteParkingLotResponse{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[22]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1475,7 +1776,7 @@ func (x *FavoriteParkingLotResponse) String() string {
 func (*FavoriteParkingLotResponse) ProtoMessage() {}
 
 func (x *FavoriteParkingLotResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[22]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1488,7 +1789,7 @@ func (x *FavoriteParkingLotResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FavoriteParkingLotResponse.ProtoReflect.Descriptor instead.
 func (*FavoriteParkingLotResponse) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{22}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *FavoriteParkingLotResponse) GetFavorited() bool {
@@ -1509,7 +1810,7 @@ type UnfavoriteParkingLotRequest struct {
 
 func (x *UnfavoriteParkingLotRequest) Reset() {
 	*x = UnfavoriteParkingLotRequest{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[23]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1521,7 +1822,7 @@ func (x *UnfavoriteParkingLotRequest) String() string {
 func (*UnfavoriteParkingLotRequest) ProtoMessage() {}
 
 func (x *UnfavoriteParkingLotRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[23]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1534,7 +1835,7 @@ func (x *UnfavoriteParkingLotRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnfavoriteParkingLotRequest.ProtoReflect.Descriptor instead.
 func (*UnfavoriteParkingLotRequest) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{23}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *UnfavoriteParkingLotRequest) GetParkingLotId() string {
@@ -1553,7 +1854,7 @@ type UnfavoriteParkingLotResponse struct {
 
 func (x *UnfavoriteParkingLotResponse) Reset() {
 	*x = UnfavoriteParkingLotResponse{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[24]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1565,7 +1866,7 @@ func (x *UnfavoriteParkingLotResponse) String() string {
 func (*UnfavoriteParkingLotResponse) ProtoMessage() {}
 
 func (x *UnfavoriteParkingLotResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[24]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1578,7 +1879,7 @@ func (x *UnfavoriteParkingLotResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnfavoriteParkingLotResponse.ProtoReflect.Descriptor instead.
 func (*UnfavoriteParkingLotResponse) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{24}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{29}
 }
 
 // ListFavoriteParkingLotsRequest is the input to ListFavoriteParkingLots.
@@ -1592,7 +1893,7 @@ type ListFavoriteParkingLotsRequest struct {
 
 func (x *ListFavoriteParkingLotsRequest) Reset() {
 	*x = ListFavoriteParkingLotsRequest{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[25]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1604,7 +1905,7 @@ func (x *ListFavoriteParkingLotsRequest) String() string {
 func (*ListFavoriteParkingLotsRequest) ProtoMessage() {}
 
 func (x *ListFavoriteParkingLotsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[25]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1617,7 +1918,7 @@ func (x *ListFavoriteParkingLotsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFavoriteParkingLotsRequest.ProtoReflect.Descriptor instead.
 func (*ListFavoriteParkingLotsRequest) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{25}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ListFavoriteParkingLotsRequest) GetPagination() *v1.Pagination {
@@ -1640,7 +1941,7 @@ type ListFavoriteParkingLotsResponse struct {
 
 func (x *ListFavoriteParkingLotsResponse) Reset() {
 	*x = ListFavoriteParkingLotsResponse{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[26]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1652,7 +1953,7 @@ func (x *ListFavoriteParkingLotsResponse) String() string {
 func (*ListFavoriteParkingLotsResponse) ProtoMessage() {}
 
 func (x *ListFavoriteParkingLotsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[26]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1665,7 +1966,7 @@ func (x *ListFavoriteParkingLotsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFavoriteParkingLotsResponse.ProtoReflect.Descriptor instead.
 func (*ListFavoriteParkingLotsResponse) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{26}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ListFavoriteParkingLotsResponse) GetParkingLots() []*ParkingLotView {
@@ -1693,7 +1994,7 @@ type ReportParkingLotOutdatedRequest struct {
 
 func (x *ReportParkingLotOutdatedRequest) Reset() {
 	*x = ReportParkingLotOutdatedRequest{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[27]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1705,7 +2006,7 @@ func (x *ReportParkingLotOutdatedRequest) String() string {
 func (*ReportParkingLotOutdatedRequest) ProtoMessage() {}
 
 func (x *ReportParkingLotOutdatedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[27]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1718,7 +2019,7 @@ func (x *ReportParkingLotOutdatedRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportParkingLotOutdatedRequest.ProtoReflect.Descriptor instead.
 func (*ReportParkingLotOutdatedRequest) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{27}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *ReportParkingLotOutdatedRequest) GetParkingLotId() string {
@@ -1743,7 +2044,7 @@ type ReportParkingLotOutdatedResponse struct {
 
 func (x *ReportParkingLotOutdatedResponse) Reset() {
 	*x = ReportParkingLotOutdatedResponse{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[28]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1755,7 +2056,7 @@ func (x *ReportParkingLotOutdatedResponse) String() string {
 func (*ReportParkingLotOutdatedResponse) ProtoMessage() {}
 
 func (x *ReportParkingLotOutdatedResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[28]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1768,7 +2069,7 @@ func (x *ReportParkingLotOutdatedResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportParkingLotOutdatedResponse.ProtoReflect.Descriptor instead.
 func (*ReportParkingLotOutdatedResponse) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{28}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *ReportParkingLotOutdatedResponse) GetAlreadyReported() bool {
@@ -1796,7 +2097,7 @@ type ListOutdatedReportsRequest struct {
 
 func (x *ListOutdatedReportsRequest) Reset() {
 	*x = ListOutdatedReportsRequest{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[29]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1808,7 +2109,7 @@ func (x *ListOutdatedReportsRequest) String() string {
 func (*ListOutdatedReportsRequest) ProtoMessage() {}
 
 func (x *ListOutdatedReportsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[29]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1821,7 +2122,7 @@ func (x *ListOutdatedReportsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListOutdatedReportsRequest.ProtoReflect.Descriptor instead.
 func (*ListOutdatedReportsRequest) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{29}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *ListOutdatedReportsRequest) GetPagination() *v1.Pagination {
@@ -1844,7 +2145,7 @@ type ListOutdatedReportsResponse struct {
 
 func (x *ListOutdatedReportsResponse) Reset() {
 	*x = ListOutdatedReportsResponse{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[30]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1856,7 +2157,7 @@ func (x *ListOutdatedReportsResponse) String() string {
 func (*ListOutdatedReportsResponse) ProtoMessage() {}
 
 func (x *ListOutdatedReportsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[30]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1869,7 +2170,7 @@ func (x *ListOutdatedReportsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListOutdatedReportsResponse.ProtoReflect.Descriptor instead.
 func (*ListOutdatedReportsResponse) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{30}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ListOutdatedReportsResponse) GetOutdatedReports() []*OutdatedReport {
@@ -1902,7 +2203,7 @@ type OutdatedReport struct {
 
 func (x *OutdatedReport) Reset() {
 	*x = OutdatedReport{}
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[31]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1914,7 +2215,7 @@ func (x *OutdatedReport) String() string {
 func (*OutdatedReport) ProtoMessage() {}
 
 func (x *OutdatedReport) ProtoReflect() protoreflect.Message {
-	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[31]
+	mi := &file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1927,7 +2228,7 @@ func (x *OutdatedReport) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OutdatedReport.ProtoReflect.Descriptor instead.
 func (*OutdatedReport) Descriptor() ([]byte, []int) {
-	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{31}
+	return file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *OutdatedReport) GetParkingLot() *ParkingLot {
@@ -1958,7 +2259,7 @@ const file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDesc = "" +
 	"2kobecal/miniprogram/carparking/v1/carparking.proto\x12!kobecal.miniprogram.carparking.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a*kobecal/miniprogram/common/v1/common.proto\"\r\n" +
 	"\vPingRequest\"(\n" +
 	"\fPingResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"\xca\x04\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"\xde\x04\n" +
 	"\n" +
 	"ParkingLot\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
@@ -1977,7 +2278,8 @@ const file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDesc = "" +
 	"created_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
 	"updated_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x122\n" +
-	"\x15outdated_report_count\x18\x0e \x01(\x05R\x13outdatedReportCount\"\x89\x02\n" +
+	"\x15outdated_report_count\x18\x0e \x01(\x05R\x13outdatedReportCount\x12\x12\n" +
+	"\x04city\x18\x0f \x01(\tR\x04city\"\xa9\x02\n" +
 	"\x0eParkingLotView\x12N\n" +
 	"\vparking_lot\x18\x01 \x01(\v2-.kobecal.miniprogram.carparking.v1.ParkingLotR\n" +
 	"parkingLot\x12\x1d\n" +
@@ -1985,7 +2287,8 @@ const file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDesc = "" +
 	"distance_m\x18\x02 \x01(\x01R\tdistanceM\x12)\n" +
 	"\x10flagged_outdated\x18\x03 \x01(\bR\x0fflaggedOutdated\x12&\n" +
 	"\x0ffavorited_by_me\x18\x04 \x01(\bR\rfavoritedByMe\x125\n" +
-	"\x17outdated_reported_by_me\x18\x05 \x01(\bR\x14outdatedReportedByMe\"\xfe\x01\n" +
+	"\x17outdated_reported_by_me\x18\x05 \x01(\bR\x14outdatedReportedByMe\x12\x1e\n" +
+	"\vowned_by_me\x18\x06 \x01(\bR\townedByMe\"\x92\x02\n" +
 	"\x0fParkingLotDraft\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
 	"\aaddress\x18\x02 \x01(\tR\aaddress\x12\x1a\n" +
@@ -1993,7 +2296,8 @@ const file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDesc = "" +
 	"\tlongitude\x18\x04 \x01(\x01R\tlongitude\x12&\n" +
 	"\x0fcover_image_url\x18\x05 \x01(\tR\rcoverImageUrl\x12(\n" +
 	"\x10price_image_urls\x18\x06 \x03(\tR\x0epriceImageUrls\x121\n" +
-	"\x15payment_qr_image_urls\x18\a \x03(\tR\x12paymentQrImageUrls\"\xa3\x01\n" +
+	"\x15payment_qr_image_urls\x18\a \x03(\tR\x12paymentQrImageUrls\x12\x12\n" +
+	"\x04city\x18\b \x01(\tR\x04city\"\xa3\x01\n" +
 	"\x1cListNearbyParkingLotsRequest\x12\x1a\n" +
 	"\blatitude\x18\x01 \x01(\x01R\blatitude\x12\x1c\n" +
 	"\tlongitude\x18\x02 \x01(\x01R\tlongitude\x12I\n" +
@@ -2002,7 +2306,23 @@ const file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDesc = "" +
 	"pagination\"\xbb\x01\n" +
 	"\x1dListNearbyParkingLotsResponse\x12T\n" +
 	"\fparking_lots\x18\x01 \x03(\v21.kobecal.miniprogram.carparking.v1.ParkingLotViewR\vparkingLots\x12D\n" +
-	"\tpage_info\x18\x02 \x01(\v2'.kobecal.miniprogram.common.v1.PageInfoR\bpageInfo\"<\n" +
+	"\tpage_info\x18\x02 \x01(\v2'.kobecal.miniprogram.common.v1.PageInfoR\bpageInfo\"u\n" +
+	"\x1dCheckCachedParkingLotsRequest\x12T\n" +
+	"\vcached_lots\x18\x01 \x03(\v23.kobecal.miniprogram.carparking.v1.CachedParkingLotR\n" +
+	"cachedLots\"s\n" +
+	"\x10CachedParkingLot\x12$\n" +
+	"\x0eparking_lot_id\x18\x01 \x01(\tR\fparkingLotId\x129\n" +
+	"\n" +
+	"updated_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"S\n" +
+	"\x1eCheckCachedParkingLotsResponse\x121\n" +
+	"\x15stale_parking_lot_ids\x18\x01 \x03(\tR\x12staleParkingLotIds\"Q\n" +
+	"\x15ReverseGeocodeRequest\x12\x1a\n" +
+	"\blatitude\x18\x01 \x01(\x01R\blatitude\x12\x1c\n" +
+	"\tlongitude\x18\x02 \x01(\x01R\tlongitude\"Z\n" +
+	"\x16ReverseGeocodeResponse\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
+	"\aaddress\x18\x02 \x01(\tR\aaddress\x12\x12\n" +
+	"\x04city\x18\x03 \x01(\tR\x04city\"<\n" +
 	"\x14GetParkingLotRequest\x12$\n" +
 	"\x0eparking_lot_id\x18\x01 \x01(\tR\fparkingLotId\"k\n" +
 	"\x15GetParkingLotResponse\x12R\n" +
@@ -2088,23 +2408,24 @@ const file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDesc = "" +
 	"\x0eReviewDecision\x12\x1f\n" +
 	"\x1bREVIEW_DECISION_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17REVIEW_DECISION_APPROVE\x10\x01\x12\x1a\n" +
-	"\x16REVIEW_DECISION_REJECT\x10\x022\xe2\x14\n" +
-	"\x11CarParkingService\x12y\n" +
-	"\x04Ping\x12..kobecal.miniprogram.carparking.v1.PingRequest\x1a/.kobecal.miniprogram.carparking.v1.PingResponse\"\x10\x82\xd3\xe4\x93\x02\n" +
-	"\x12\b/v1/ping\x12\xbb\x01\n" +
-	"\x15ListNearbyParkingLots\x12?.kobecal.miniprogram.carparking.v1.ListNearbyParkingLotsRequest\x1a@.kobecal.miniprogram.carparking.v1.ListNearbyParkingLotsResponse\"\x1f\x82\xd3\xe4\x93\x02\x19\x12\x17/v1/parking-lots:nearby\x12\xad\x01\n" +
-	"\rGetParkingLot\x127.kobecal.miniprogram.carparking.v1.GetParkingLotRequest\x1a8.kobecal.miniprogram.carparking.v1.GetParkingLotResponse\")\x82\xd3\xe4\x93\x02#\x12!/v1/parking-lots/{parking_lot_id}\x12\xa8\x01\n" +
-	"\x10CreateParkingLot\x12:.kobecal.miniprogram.carparking.v1.CreateParkingLotRequest\x1a;.kobecal.miniprogram.carparking.v1.CreateParkingLotResponse\"\x1b\x82\xd3\xe4\x93\x02\x15:\x01*\"\x10/v1/parking-lots\x12\xb9\x01\n" +
-	"\x10UpdateParkingLot\x12:.kobecal.miniprogram.carparking.v1.UpdateParkingLotRequest\x1a;.kobecal.miniprogram.carparking.v1.UpdateParkingLotResponse\",\x82\xd3\xe4\x93\x02&:\x01*\x1a!/v1/parking-lots/{parking_lot_id}\x12\xb6\x01\n" +
-	"\x10DeleteParkingLot\x12:.kobecal.miniprogram.carparking.v1.DeleteParkingLotRequest\x1a;.kobecal.miniprogram.carparking.v1.DeleteParkingLotResponse\")\x82\xd3\xe4\x93\x02#*!/v1/parking-lots/{parking_lot_id}\x12\xab\x01\n" +
-	"\x11ListMyParkingLots\x12;.kobecal.miniprogram.carparking.v1.ListMyParkingLotsRequest\x1a<.kobecal.miniprogram.carparking.v1.ListMyParkingLotsResponse\"\x1b\x82\xd3\xe4\x93\x02\x15\x12\x13/v1/my/parking-lots\x12\xce\x01\n" +
-	"\x18ListParkingLotsForReview\x12B.kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewRequest\x1aC.kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewResponse\")\x82\xd3\xe4\x93\x02#\x12!/v1/admin/parking-lots:for-review\x12\xc0\x01\n" +
-	"\x10ReviewParkingLot\x12:.kobecal.miniprogram.carparking.v1.ReviewParkingLotRequest\x1a;.kobecal.miniprogram.carparking.v1.ReviewParkingLotResponse\"3\x82\xd3\xe4\x93\x02-:\x01*\"(/v1/parking-lots/{parking_lot_id}:review\x12\xc8\x01\n" +
-	"\x12FavoriteParkingLot\x12<.kobecal.miniprogram.carparking.v1.FavoriteParkingLotRequest\x1a=.kobecal.miniprogram.carparking.v1.FavoriteParkingLotResponse\"5\x82\xd3\xe4\x93\x02/:\x01*\"*/v1/parking-lots/{parking_lot_id}:favorite\x12\xd0\x01\n" +
-	"\x14UnfavoriteParkingLot\x12>.kobecal.miniprogram.carparking.v1.UnfavoriteParkingLotRequest\x1a?.kobecal.miniprogram.carparking.v1.UnfavoriteParkingLotResponse\"7\x82\xd3\xe4\x93\x021:\x01*\",/v1/parking-lots/{parking_lot_id}:unfavorite\x12\xc4\x01\n" +
-	"\x17ListFavoriteParkingLots\x12A.kobecal.miniprogram.carparking.v1.ListFavoriteParkingLotsRequest\x1aB.kobecal.miniprogram.carparking.v1.ListFavoriteParkingLotsResponse\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/v1/favorites/parking-lots\x12\xe1\x01\n" +
-	"\x18ReportParkingLotOutdated\x12B.kobecal.miniprogram.carparking.v1.ReportParkingLotOutdatedRequest\x1aC.kobecal.miniprogram.carparking.v1.ReportParkingLotOutdatedResponse\"<\x82\xd3\xe4\x93\x026:\x01*\"1/v1/parking-lots/{parking_lot_id}:report-outdated\x12\xb8\x01\n" +
-	"\x13ListOutdatedReports\x12=.kobecal.miniprogram.carparking.v1.ListOutdatedReportsRequest\x1a>.kobecal.miniprogram.carparking.v1.ListOutdatedReportsResponse\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/v1/admin/outdated-reportsBIZGgithub.com/kobecal/protos/gen/go/miniprogram/carparking/v1;carparkingv1b\x06proto3"
+	"\x16REVIEW_DECISION_REJECT\x10\x022\x95\x19\n" +
+	"\x11CarParkingService\x12\x85\x01\n" +
+	"\x04Ping\x12..kobecal.miniprogram.carparking.v1.PingRequest\x1a/.kobecal.miniprogram.carparking.v1.PingResponse\"\x1c\x82\xd3\xe4\x93\x02\x16\x12\x14/car-parking/v1/ping\x12\xc7\x01\n" +
+	"\x15ListNearbyParkingLots\x12?.kobecal.miniprogram.carparking.v1.ListNearbyParkingLotsRequest\x1a@.kobecal.miniprogram.carparking.v1.ListNearbyParkingLotsResponse\"+\x82\xd3\xe4\x93\x02%\x12#/car-parking/v1/parking-lots:nearby\x12\xd3\x01\n" +
+	"\x16CheckCachedParkingLots\x12@.kobecal.miniprogram.carparking.v1.CheckCachedParkingLotsRequest\x1aA.kobecal.miniprogram.carparking.v1.CheckCachedParkingLotsResponse\"4\x82\xd3\xe4\x93\x02.:\x01*\")/car-parking/v1/parking-lots:check-cached\x12\xb1\x01\n" +
+	"\x0eReverseGeocode\x128.kobecal.miniprogram.carparking.v1.ReverseGeocodeRequest\x1a9.kobecal.miniprogram.carparking.v1.ReverseGeocodeResponse\"*\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/car-parking/v1/geocode:reverse\x12\xb9\x01\n" +
+	"\rGetParkingLot\x127.kobecal.miniprogram.carparking.v1.GetParkingLotRequest\x1a8.kobecal.miniprogram.carparking.v1.GetParkingLotResponse\"5\x82\xd3\xe4\x93\x02/\x12-/car-parking/v1/parking-lots/{parking_lot_id}\x12\xb4\x01\n" +
+	"\x10CreateParkingLot\x12:.kobecal.miniprogram.carparking.v1.CreateParkingLotRequest\x1a;.kobecal.miniprogram.carparking.v1.CreateParkingLotResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/car-parking/v1/parking-lots\x12\xc5\x01\n" +
+	"\x10UpdateParkingLot\x12:.kobecal.miniprogram.carparking.v1.UpdateParkingLotRequest\x1a;.kobecal.miniprogram.carparking.v1.UpdateParkingLotResponse\"8\x82\xd3\xe4\x93\x022:\x01*\x1a-/car-parking/v1/parking-lots/{parking_lot_id}\x12\xc2\x01\n" +
+	"\x10DeleteParkingLot\x12:.kobecal.miniprogram.carparking.v1.DeleteParkingLotRequest\x1a;.kobecal.miniprogram.carparking.v1.DeleteParkingLotResponse\"5\x82\xd3\xe4\x93\x02/*-/car-parking/v1/parking-lots/{parking_lot_id}\x12\xb7\x01\n" +
+	"\x11ListMyParkingLots\x12;.kobecal.miniprogram.carparking.v1.ListMyParkingLotsRequest\x1a<.kobecal.miniprogram.carparking.v1.ListMyParkingLotsResponse\"'\x82\xd3\xe4\x93\x02!\x12\x1f/car-parking/v1/my/parking-lots\x12\xda\x01\n" +
+	"\x18ListParkingLotsForReview\x12B.kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewRequest\x1aC.kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewResponse\"5\x82\xd3\xe4\x93\x02/\x12-/car-parking/v1/admin/parking-lots:for-review\x12\xcc\x01\n" +
+	"\x10ReviewParkingLot\x12:.kobecal.miniprogram.carparking.v1.ReviewParkingLotRequest\x1a;.kobecal.miniprogram.carparking.v1.ReviewParkingLotResponse\"?\x82\xd3\xe4\x93\x029:\x01*\"4/car-parking/v1/parking-lots/{parking_lot_id}:review\x12\xd4\x01\n" +
+	"\x12FavoriteParkingLot\x12<.kobecal.miniprogram.carparking.v1.FavoriteParkingLotRequest\x1a=.kobecal.miniprogram.carparking.v1.FavoriteParkingLotResponse\"A\x82\xd3\xe4\x93\x02;:\x01*\"6/car-parking/v1/parking-lots/{parking_lot_id}:favorite\x12\xdc\x01\n" +
+	"\x14UnfavoriteParkingLot\x12>.kobecal.miniprogram.carparking.v1.UnfavoriteParkingLotRequest\x1a?.kobecal.miniprogram.carparking.v1.UnfavoriteParkingLotResponse\"C\x82\xd3\xe4\x93\x02=:\x01*\"8/car-parking/v1/parking-lots/{parking_lot_id}:unfavorite\x12\xd0\x01\n" +
+	"\x17ListFavoriteParkingLots\x12A.kobecal.miniprogram.carparking.v1.ListFavoriteParkingLotsRequest\x1aB.kobecal.miniprogram.carparking.v1.ListFavoriteParkingLotsResponse\".\x82\xd3\xe4\x93\x02(\x12&/car-parking/v1/favorites/parking-lots\x12\xed\x01\n" +
+	"\x18ReportParkingLotOutdated\x12B.kobecal.miniprogram.carparking.v1.ReportParkingLotOutdatedRequest\x1aC.kobecal.miniprogram.carparking.v1.ReportParkingLotOutdatedResponse\"H\x82\xd3\xe4\x93\x02B:\x01*\"=/car-parking/v1/parking-lots/{parking_lot_id}:report-outdated\x12\xc4\x01\n" +
+	"\x13ListOutdatedReports\x12=.kobecal.miniprogram.carparking.v1.ListOutdatedReportsRequest\x1a>.kobecal.miniprogram.carparking.v1.ListOutdatedReportsResponse\".\x82\xd3\xe4\x93\x02(\x12&/car-parking/v1/admin/outdated-reportsBIZGgithub.com/kobecal/protos/gen/go/miniprogram/carparking/v1;carparkingv1b\x06proto3"
 
 var (
 	file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescOnce sync.Once
@@ -2119,7 +2440,7 @@ func file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDescGZIP() []byt
 }
 
 var file_kobecal_miniprogram_carparking_v1_carparking_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
+var file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes = make([]protoimpl.MessageInfo, 37)
 var file_kobecal_miniprogram_carparking_v1_carparking_proto_goTypes = []any{
 	(ParkingLotStatus)(0),                    // 0: kobecal.miniprogram.carparking.v1.ParkingLotStatus
 	(ReviewDecision)(0),                      // 1: kobecal.miniprogram.carparking.v1.ReviewDecision
@@ -2130,98 +2451,109 @@ var file_kobecal_miniprogram_carparking_v1_carparking_proto_goTypes = []any{
 	(*ParkingLotDraft)(nil),                  // 6: kobecal.miniprogram.carparking.v1.ParkingLotDraft
 	(*ListNearbyParkingLotsRequest)(nil),     // 7: kobecal.miniprogram.carparking.v1.ListNearbyParkingLotsRequest
 	(*ListNearbyParkingLotsResponse)(nil),    // 8: kobecal.miniprogram.carparking.v1.ListNearbyParkingLotsResponse
-	(*GetParkingLotRequest)(nil),             // 9: kobecal.miniprogram.carparking.v1.GetParkingLotRequest
-	(*GetParkingLotResponse)(nil),            // 10: kobecal.miniprogram.carparking.v1.GetParkingLotResponse
-	(*CreateParkingLotRequest)(nil),          // 11: kobecal.miniprogram.carparking.v1.CreateParkingLotRequest
-	(*CreateParkingLotResponse)(nil),         // 12: kobecal.miniprogram.carparking.v1.CreateParkingLotResponse
-	(*UpdateParkingLotRequest)(nil),          // 13: kobecal.miniprogram.carparking.v1.UpdateParkingLotRequest
-	(*UpdateParkingLotResponse)(nil),         // 14: kobecal.miniprogram.carparking.v1.UpdateParkingLotResponse
-	(*DeleteParkingLotRequest)(nil),          // 15: kobecal.miniprogram.carparking.v1.DeleteParkingLotRequest
-	(*DeleteParkingLotResponse)(nil),         // 16: kobecal.miniprogram.carparking.v1.DeleteParkingLotResponse
-	(*ListMyParkingLotsRequest)(nil),         // 17: kobecal.miniprogram.carparking.v1.ListMyParkingLotsRequest
-	(*ListMyParkingLotsResponse)(nil),        // 18: kobecal.miniprogram.carparking.v1.ListMyParkingLotsResponse
-	(*ListParkingLotsForReviewRequest)(nil),  // 19: kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewRequest
-	(*ListParkingLotsForReviewResponse)(nil), // 20: kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewResponse
-	(*ReviewParkingLotRequest)(nil),          // 21: kobecal.miniprogram.carparking.v1.ReviewParkingLotRequest
-	(*ReviewParkingLotResponse)(nil),         // 22: kobecal.miniprogram.carparking.v1.ReviewParkingLotResponse
-	(*FavoriteParkingLotRequest)(nil),        // 23: kobecal.miniprogram.carparking.v1.FavoriteParkingLotRequest
-	(*FavoriteParkingLotResponse)(nil),       // 24: kobecal.miniprogram.carparking.v1.FavoriteParkingLotResponse
-	(*UnfavoriteParkingLotRequest)(nil),      // 25: kobecal.miniprogram.carparking.v1.UnfavoriteParkingLotRequest
-	(*UnfavoriteParkingLotResponse)(nil),     // 26: kobecal.miniprogram.carparking.v1.UnfavoriteParkingLotResponse
-	(*ListFavoriteParkingLotsRequest)(nil),   // 27: kobecal.miniprogram.carparking.v1.ListFavoriteParkingLotsRequest
-	(*ListFavoriteParkingLotsResponse)(nil),  // 28: kobecal.miniprogram.carparking.v1.ListFavoriteParkingLotsResponse
-	(*ReportParkingLotOutdatedRequest)(nil),  // 29: kobecal.miniprogram.carparking.v1.ReportParkingLotOutdatedRequest
-	(*ReportParkingLotOutdatedResponse)(nil), // 30: kobecal.miniprogram.carparking.v1.ReportParkingLotOutdatedResponse
-	(*ListOutdatedReportsRequest)(nil),       // 31: kobecal.miniprogram.carparking.v1.ListOutdatedReportsRequest
-	(*ListOutdatedReportsResponse)(nil),      // 32: kobecal.miniprogram.carparking.v1.ListOutdatedReportsResponse
-	(*OutdatedReport)(nil),                   // 33: kobecal.miniprogram.carparking.v1.OutdatedReport
-	(*timestamppb.Timestamp)(nil),            // 34: google.protobuf.Timestamp
-	(*v1.Pagination)(nil),                    // 35: kobecal.miniprogram.common.v1.Pagination
-	(*v1.PageInfo)(nil),                      // 36: kobecal.miniprogram.common.v1.PageInfo
+	(*CheckCachedParkingLotsRequest)(nil),    // 9: kobecal.miniprogram.carparking.v1.CheckCachedParkingLotsRequest
+	(*CachedParkingLot)(nil),                 // 10: kobecal.miniprogram.carparking.v1.CachedParkingLot
+	(*CheckCachedParkingLotsResponse)(nil),   // 11: kobecal.miniprogram.carparking.v1.CheckCachedParkingLotsResponse
+	(*ReverseGeocodeRequest)(nil),            // 12: kobecal.miniprogram.carparking.v1.ReverseGeocodeRequest
+	(*ReverseGeocodeResponse)(nil),           // 13: kobecal.miniprogram.carparking.v1.ReverseGeocodeResponse
+	(*GetParkingLotRequest)(nil),             // 14: kobecal.miniprogram.carparking.v1.GetParkingLotRequest
+	(*GetParkingLotResponse)(nil),            // 15: kobecal.miniprogram.carparking.v1.GetParkingLotResponse
+	(*CreateParkingLotRequest)(nil),          // 16: kobecal.miniprogram.carparking.v1.CreateParkingLotRequest
+	(*CreateParkingLotResponse)(nil),         // 17: kobecal.miniprogram.carparking.v1.CreateParkingLotResponse
+	(*UpdateParkingLotRequest)(nil),          // 18: kobecal.miniprogram.carparking.v1.UpdateParkingLotRequest
+	(*UpdateParkingLotResponse)(nil),         // 19: kobecal.miniprogram.carparking.v1.UpdateParkingLotResponse
+	(*DeleteParkingLotRequest)(nil),          // 20: kobecal.miniprogram.carparking.v1.DeleteParkingLotRequest
+	(*DeleteParkingLotResponse)(nil),         // 21: kobecal.miniprogram.carparking.v1.DeleteParkingLotResponse
+	(*ListMyParkingLotsRequest)(nil),         // 22: kobecal.miniprogram.carparking.v1.ListMyParkingLotsRequest
+	(*ListMyParkingLotsResponse)(nil),        // 23: kobecal.miniprogram.carparking.v1.ListMyParkingLotsResponse
+	(*ListParkingLotsForReviewRequest)(nil),  // 24: kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewRequest
+	(*ListParkingLotsForReviewResponse)(nil), // 25: kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewResponse
+	(*ReviewParkingLotRequest)(nil),          // 26: kobecal.miniprogram.carparking.v1.ReviewParkingLotRequest
+	(*ReviewParkingLotResponse)(nil),         // 27: kobecal.miniprogram.carparking.v1.ReviewParkingLotResponse
+	(*FavoriteParkingLotRequest)(nil),        // 28: kobecal.miniprogram.carparking.v1.FavoriteParkingLotRequest
+	(*FavoriteParkingLotResponse)(nil),       // 29: kobecal.miniprogram.carparking.v1.FavoriteParkingLotResponse
+	(*UnfavoriteParkingLotRequest)(nil),      // 30: kobecal.miniprogram.carparking.v1.UnfavoriteParkingLotRequest
+	(*UnfavoriteParkingLotResponse)(nil),     // 31: kobecal.miniprogram.carparking.v1.UnfavoriteParkingLotResponse
+	(*ListFavoriteParkingLotsRequest)(nil),   // 32: kobecal.miniprogram.carparking.v1.ListFavoriteParkingLotsRequest
+	(*ListFavoriteParkingLotsResponse)(nil),  // 33: kobecal.miniprogram.carparking.v1.ListFavoriteParkingLotsResponse
+	(*ReportParkingLotOutdatedRequest)(nil),  // 34: kobecal.miniprogram.carparking.v1.ReportParkingLotOutdatedRequest
+	(*ReportParkingLotOutdatedResponse)(nil), // 35: kobecal.miniprogram.carparking.v1.ReportParkingLotOutdatedResponse
+	(*ListOutdatedReportsRequest)(nil),       // 36: kobecal.miniprogram.carparking.v1.ListOutdatedReportsRequest
+	(*ListOutdatedReportsResponse)(nil),      // 37: kobecal.miniprogram.carparking.v1.ListOutdatedReportsResponse
+	(*OutdatedReport)(nil),                   // 38: kobecal.miniprogram.carparking.v1.OutdatedReport
+	(*timestamppb.Timestamp)(nil),            // 39: google.protobuf.Timestamp
+	(*v1.Pagination)(nil),                    // 40: kobecal.miniprogram.common.v1.Pagination
+	(*v1.PageInfo)(nil),                      // 41: kobecal.miniprogram.common.v1.PageInfo
 }
 var file_kobecal_miniprogram_carparking_v1_carparking_proto_depIdxs = []int32{
 	0,  // 0: kobecal.miniprogram.carparking.v1.ParkingLot.status:type_name -> kobecal.miniprogram.carparking.v1.ParkingLotStatus
-	34, // 1: kobecal.miniprogram.carparking.v1.ParkingLot.created_at:type_name -> google.protobuf.Timestamp
-	34, // 2: kobecal.miniprogram.carparking.v1.ParkingLot.updated_at:type_name -> google.protobuf.Timestamp
+	39, // 1: kobecal.miniprogram.carparking.v1.ParkingLot.created_at:type_name -> google.protobuf.Timestamp
+	39, // 2: kobecal.miniprogram.carparking.v1.ParkingLot.updated_at:type_name -> google.protobuf.Timestamp
 	4,  // 3: kobecal.miniprogram.carparking.v1.ParkingLotView.parking_lot:type_name -> kobecal.miniprogram.carparking.v1.ParkingLot
-	35, // 4: kobecal.miniprogram.carparking.v1.ListNearbyParkingLotsRequest.pagination:type_name -> kobecal.miniprogram.common.v1.Pagination
+	40, // 4: kobecal.miniprogram.carparking.v1.ListNearbyParkingLotsRequest.pagination:type_name -> kobecal.miniprogram.common.v1.Pagination
 	5,  // 5: kobecal.miniprogram.carparking.v1.ListNearbyParkingLotsResponse.parking_lots:type_name -> kobecal.miniprogram.carparking.v1.ParkingLotView
-	36, // 6: kobecal.miniprogram.carparking.v1.ListNearbyParkingLotsResponse.page_info:type_name -> kobecal.miniprogram.common.v1.PageInfo
-	5,  // 7: kobecal.miniprogram.carparking.v1.GetParkingLotResponse.parking_lot:type_name -> kobecal.miniprogram.carparking.v1.ParkingLotView
-	6,  // 8: kobecal.miniprogram.carparking.v1.CreateParkingLotRequest.parking_lot:type_name -> kobecal.miniprogram.carparking.v1.ParkingLotDraft
-	4,  // 9: kobecal.miniprogram.carparking.v1.CreateParkingLotResponse.parking_lot:type_name -> kobecal.miniprogram.carparking.v1.ParkingLot
-	6,  // 10: kobecal.miniprogram.carparking.v1.UpdateParkingLotRequest.parking_lot:type_name -> kobecal.miniprogram.carparking.v1.ParkingLotDraft
-	4,  // 11: kobecal.miniprogram.carparking.v1.UpdateParkingLotResponse.parking_lot:type_name -> kobecal.miniprogram.carparking.v1.ParkingLot
-	35, // 12: kobecal.miniprogram.carparking.v1.ListMyParkingLotsRequest.pagination:type_name -> kobecal.miniprogram.common.v1.Pagination
-	5,  // 13: kobecal.miniprogram.carparking.v1.ListMyParkingLotsResponse.parking_lots:type_name -> kobecal.miniprogram.carparking.v1.ParkingLotView
-	36, // 14: kobecal.miniprogram.carparking.v1.ListMyParkingLotsResponse.page_info:type_name -> kobecal.miniprogram.common.v1.PageInfo
-	0,  // 15: kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewRequest.status:type_name -> kobecal.miniprogram.carparking.v1.ParkingLotStatus
-	35, // 16: kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewRequest.pagination:type_name -> kobecal.miniprogram.common.v1.Pagination
-	4,  // 17: kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewResponse.parking_lots:type_name -> kobecal.miniprogram.carparking.v1.ParkingLot
-	36, // 18: kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewResponse.page_info:type_name -> kobecal.miniprogram.common.v1.PageInfo
-	1,  // 19: kobecal.miniprogram.carparking.v1.ReviewParkingLotRequest.decision:type_name -> kobecal.miniprogram.carparking.v1.ReviewDecision
-	4,  // 20: kobecal.miniprogram.carparking.v1.ReviewParkingLotResponse.parking_lot:type_name -> kobecal.miniprogram.carparking.v1.ParkingLot
-	35, // 21: kobecal.miniprogram.carparking.v1.ListFavoriteParkingLotsRequest.pagination:type_name -> kobecal.miniprogram.common.v1.Pagination
-	5,  // 22: kobecal.miniprogram.carparking.v1.ListFavoriteParkingLotsResponse.parking_lots:type_name -> kobecal.miniprogram.carparking.v1.ParkingLotView
-	36, // 23: kobecal.miniprogram.carparking.v1.ListFavoriteParkingLotsResponse.page_info:type_name -> kobecal.miniprogram.common.v1.PageInfo
-	35, // 24: kobecal.miniprogram.carparking.v1.ListOutdatedReportsRequest.pagination:type_name -> kobecal.miniprogram.common.v1.Pagination
-	33, // 25: kobecal.miniprogram.carparking.v1.ListOutdatedReportsResponse.outdated_reports:type_name -> kobecal.miniprogram.carparking.v1.OutdatedReport
-	36, // 26: kobecal.miniprogram.carparking.v1.ListOutdatedReportsResponse.page_info:type_name -> kobecal.miniprogram.common.v1.PageInfo
-	4,  // 27: kobecal.miniprogram.carparking.v1.OutdatedReport.parking_lot:type_name -> kobecal.miniprogram.carparking.v1.ParkingLot
-	34, // 28: kobecal.miniprogram.carparking.v1.OutdatedReport.reported_at:type_name -> google.protobuf.Timestamp
-	2,  // 29: kobecal.miniprogram.carparking.v1.CarParkingService.Ping:input_type -> kobecal.miniprogram.carparking.v1.PingRequest
-	7,  // 30: kobecal.miniprogram.carparking.v1.CarParkingService.ListNearbyParkingLots:input_type -> kobecal.miniprogram.carparking.v1.ListNearbyParkingLotsRequest
-	9,  // 31: kobecal.miniprogram.carparking.v1.CarParkingService.GetParkingLot:input_type -> kobecal.miniprogram.carparking.v1.GetParkingLotRequest
-	11, // 32: kobecal.miniprogram.carparking.v1.CarParkingService.CreateParkingLot:input_type -> kobecal.miniprogram.carparking.v1.CreateParkingLotRequest
-	13, // 33: kobecal.miniprogram.carparking.v1.CarParkingService.UpdateParkingLot:input_type -> kobecal.miniprogram.carparking.v1.UpdateParkingLotRequest
-	15, // 34: kobecal.miniprogram.carparking.v1.CarParkingService.DeleteParkingLot:input_type -> kobecal.miniprogram.carparking.v1.DeleteParkingLotRequest
-	17, // 35: kobecal.miniprogram.carparking.v1.CarParkingService.ListMyParkingLots:input_type -> kobecal.miniprogram.carparking.v1.ListMyParkingLotsRequest
-	19, // 36: kobecal.miniprogram.carparking.v1.CarParkingService.ListParkingLotsForReview:input_type -> kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewRequest
-	21, // 37: kobecal.miniprogram.carparking.v1.CarParkingService.ReviewParkingLot:input_type -> kobecal.miniprogram.carparking.v1.ReviewParkingLotRequest
-	23, // 38: kobecal.miniprogram.carparking.v1.CarParkingService.FavoriteParkingLot:input_type -> kobecal.miniprogram.carparking.v1.FavoriteParkingLotRequest
-	25, // 39: kobecal.miniprogram.carparking.v1.CarParkingService.UnfavoriteParkingLot:input_type -> kobecal.miniprogram.carparking.v1.UnfavoriteParkingLotRequest
-	27, // 40: kobecal.miniprogram.carparking.v1.CarParkingService.ListFavoriteParkingLots:input_type -> kobecal.miniprogram.carparking.v1.ListFavoriteParkingLotsRequest
-	29, // 41: kobecal.miniprogram.carparking.v1.CarParkingService.ReportParkingLotOutdated:input_type -> kobecal.miniprogram.carparking.v1.ReportParkingLotOutdatedRequest
-	31, // 42: kobecal.miniprogram.carparking.v1.CarParkingService.ListOutdatedReports:input_type -> kobecal.miniprogram.carparking.v1.ListOutdatedReportsRequest
-	3,  // 43: kobecal.miniprogram.carparking.v1.CarParkingService.Ping:output_type -> kobecal.miniprogram.carparking.v1.PingResponse
-	8,  // 44: kobecal.miniprogram.carparking.v1.CarParkingService.ListNearbyParkingLots:output_type -> kobecal.miniprogram.carparking.v1.ListNearbyParkingLotsResponse
-	10, // 45: kobecal.miniprogram.carparking.v1.CarParkingService.GetParkingLot:output_type -> kobecal.miniprogram.carparking.v1.GetParkingLotResponse
-	12, // 46: kobecal.miniprogram.carparking.v1.CarParkingService.CreateParkingLot:output_type -> kobecal.miniprogram.carparking.v1.CreateParkingLotResponse
-	14, // 47: kobecal.miniprogram.carparking.v1.CarParkingService.UpdateParkingLot:output_type -> kobecal.miniprogram.carparking.v1.UpdateParkingLotResponse
-	16, // 48: kobecal.miniprogram.carparking.v1.CarParkingService.DeleteParkingLot:output_type -> kobecal.miniprogram.carparking.v1.DeleteParkingLotResponse
-	18, // 49: kobecal.miniprogram.carparking.v1.CarParkingService.ListMyParkingLots:output_type -> kobecal.miniprogram.carparking.v1.ListMyParkingLotsResponse
-	20, // 50: kobecal.miniprogram.carparking.v1.CarParkingService.ListParkingLotsForReview:output_type -> kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewResponse
-	22, // 51: kobecal.miniprogram.carparking.v1.CarParkingService.ReviewParkingLot:output_type -> kobecal.miniprogram.carparking.v1.ReviewParkingLotResponse
-	24, // 52: kobecal.miniprogram.carparking.v1.CarParkingService.FavoriteParkingLot:output_type -> kobecal.miniprogram.carparking.v1.FavoriteParkingLotResponse
-	26, // 53: kobecal.miniprogram.carparking.v1.CarParkingService.UnfavoriteParkingLot:output_type -> kobecal.miniprogram.carparking.v1.UnfavoriteParkingLotResponse
-	28, // 54: kobecal.miniprogram.carparking.v1.CarParkingService.ListFavoriteParkingLots:output_type -> kobecal.miniprogram.carparking.v1.ListFavoriteParkingLotsResponse
-	30, // 55: kobecal.miniprogram.carparking.v1.CarParkingService.ReportParkingLotOutdated:output_type -> kobecal.miniprogram.carparking.v1.ReportParkingLotOutdatedResponse
-	32, // 56: kobecal.miniprogram.carparking.v1.CarParkingService.ListOutdatedReports:output_type -> kobecal.miniprogram.carparking.v1.ListOutdatedReportsResponse
-	43, // [43:57] is the sub-list for method output_type
-	29, // [29:43] is the sub-list for method input_type
-	29, // [29:29] is the sub-list for extension type_name
-	29, // [29:29] is the sub-list for extension extendee
-	0,  // [0:29] is the sub-list for field type_name
+	41, // 6: kobecal.miniprogram.carparking.v1.ListNearbyParkingLotsResponse.page_info:type_name -> kobecal.miniprogram.common.v1.PageInfo
+	10, // 7: kobecal.miniprogram.carparking.v1.CheckCachedParkingLotsRequest.cached_lots:type_name -> kobecal.miniprogram.carparking.v1.CachedParkingLot
+	39, // 8: kobecal.miniprogram.carparking.v1.CachedParkingLot.updated_at:type_name -> google.protobuf.Timestamp
+	5,  // 9: kobecal.miniprogram.carparking.v1.GetParkingLotResponse.parking_lot:type_name -> kobecal.miniprogram.carparking.v1.ParkingLotView
+	6,  // 10: kobecal.miniprogram.carparking.v1.CreateParkingLotRequest.parking_lot:type_name -> kobecal.miniprogram.carparking.v1.ParkingLotDraft
+	4,  // 11: kobecal.miniprogram.carparking.v1.CreateParkingLotResponse.parking_lot:type_name -> kobecal.miniprogram.carparking.v1.ParkingLot
+	6,  // 12: kobecal.miniprogram.carparking.v1.UpdateParkingLotRequest.parking_lot:type_name -> kobecal.miniprogram.carparking.v1.ParkingLotDraft
+	4,  // 13: kobecal.miniprogram.carparking.v1.UpdateParkingLotResponse.parking_lot:type_name -> kobecal.miniprogram.carparking.v1.ParkingLot
+	40, // 14: kobecal.miniprogram.carparking.v1.ListMyParkingLotsRequest.pagination:type_name -> kobecal.miniprogram.common.v1.Pagination
+	5,  // 15: kobecal.miniprogram.carparking.v1.ListMyParkingLotsResponse.parking_lots:type_name -> kobecal.miniprogram.carparking.v1.ParkingLotView
+	41, // 16: kobecal.miniprogram.carparking.v1.ListMyParkingLotsResponse.page_info:type_name -> kobecal.miniprogram.common.v1.PageInfo
+	0,  // 17: kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewRequest.status:type_name -> kobecal.miniprogram.carparking.v1.ParkingLotStatus
+	40, // 18: kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewRequest.pagination:type_name -> kobecal.miniprogram.common.v1.Pagination
+	4,  // 19: kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewResponse.parking_lots:type_name -> kobecal.miniprogram.carparking.v1.ParkingLot
+	41, // 20: kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewResponse.page_info:type_name -> kobecal.miniprogram.common.v1.PageInfo
+	1,  // 21: kobecal.miniprogram.carparking.v1.ReviewParkingLotRequest.decision:type_name -> kobecal.miniprogram.carparking.v1.ReviewDecision
+	4,  // 22: kobecal.miniprogram.carparking.v1.ReviewParkingLotResponse.parking_lot:type_name -> kobecal.miniprogram.carparking.v1.ParkingLot
+	40, // 23: kobecal.miniprogram.carparking.v1.ListFavoriteParkingLotsRequest.pagination:type_name -> kobecal.miniprogram.common.v1.Pagination
+	5,  // 24: kobecal.miniprogram.carparking.v1.ListFavoriteParkingLotsResponse.parking_lots:type_name -> kobecal.miniprogram.carparking.v1.ParkingLotView
+	41, // 25: kobecal.miniprogram.carparking.v1.ListFavoriteParkingLotsResponse.page_info:type_name -> kobecal.miniprogram.common.v1.PageInfo
+	40, // 26: kobecal.miniprogram.carparking.v1.ListOutdatedReportsRequest.pagination:type_name -> kobecal.miniprogram.common.v1.Pagination
+	38, // 27: kobecal.miniprogram.carparking.v1.ListOutdatedReportsResponse.outdated_reports:type_name -> kobecal.miniprogram.carparking.v1.OutdatedReport
+	41, // 28: kobecal.miniprogram.carparking.v1.ListOutdatedReportsResponse.page_info:type_name -> kobecal.miniprogram.common.v1.PageInfo
+	4,  // 29: kobecal.miniprogram.carparking.v1.OutdatedReport.parking_lot:type_name -> kobecal.miniprogram.carparking.v1.ParkingLot
+	39, // 30: kobecal.miniprogram.carparking.v1.OutdatedReport.reported_at:type_name -> google.protobuf.Timestamp
+	2,  // 31: kobecal.miniprogram.carparking.v1.CarParkingService.Ping:input_type -> kobecal.miniprogram.carparking.v1.PingRequest
+	7,  // 32: kobecal.miniprogram.carparking.v1.CarParkingService.ListNearbyParkingLots:input_type -> kobecal.miniprogram.carparking.v1.ListNearbyParkingLotsRequest
+	9,  // 33: kobecal.miniprogram.carparking.v1.CarParkingService.CheckCachedParkingLots:input_type -> kobecal.miniprogram.carparking.v1.CheckCachedParkingLotsRequest
+	12, // 34: kobecal.miniprogram.carparking.v1.CarParkingService.ReverseGeocode:input_type -> kobecal.miniprogram.carparking.v1.ReverseGeocodeRequest
+	14, // 35: kobecal.miniprogram.carparking.v1.CarParkingService.GetParkingLot:input_type -> kobecal.miniprogram.carparking.v1.GetParkingLotRequest
+	16, // 36: kobecal.miniprogram.carparking.v1.CarParkingService.CreateParkingLot:input_type -> kobecal.miniprogram.carparking.v1.CreateParkingLotRequest
+	18, // 37: kobecal.miniprogram.carparking.v1.CarParkingService.UpdateParkingLot:input_type -> kobecal.miniprogram.carparking.v1.UpdateParkingLotRequest
+	20, // 38: kobecal.miniprogram.carparking.v1.CarParkingService.DeleteParkingLot:input_type -> kobecal.miniprogram.carparking.v1.DeleteParkingLotRequest
+	22, // 39: kobecal.miniprogram.carparking.v1.CarParkingService.ListMyParkingLots:input_type -> kobecal.miniprogram.carparking.v1.ListMyParkingLotsRequest
+	24, // 40: kobecal.miniprogram.carparking.v1.CarParkingService.ListParkingLotsForReview:input_type -> kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewRequest
+	26, // 41: kobecal.miniprogram.carparking.v1.CarParkingService.ReviewParkingLot:input_type -> kobecal.miniprogram.carparking.v1.ReviewParkingLotRequest
+	28, // 42: kobecal.miniprogram.carparking.v1.CarParkingService.FavoriteParkingLot:input_type -> kobecal.miniprogram.carparking.v1.FavoriteParkingLotRequest
+	30, // 43: kobecal.miniprogram.carparking.v1.CarParkingService.UnfavoriteParkingLot:input_type -> kobecal.miniprogram.carparking.v1.UnfavoriteParkingLotRequest
+	32, // 44: kobecal.miniprogram.carparking.v1.CarParkingService.ListFavoriteParkingLots:input_type -> kobecal.miniprogram.carparking.v1.ListFavoriteParkingLotsRequest
+	34, // 45: kobecal.miniprogram.carparking.v1.CarParkingService.ReportParkingLotOutdated:input_type -> kobecal.miniprogram.carparking.v1.ReportParkingLotOutdatedRequest
+	36, // 46: kobecal.miniprogram.carparking.v1.CarParkingService.ListOutdatedReports:input_type -> kobecal.miniprogram.carparking.v1.ListOutdatedReportsRequest
+	3,  // 47: kobecal.miniprogram.carparking.v1.CarParkingService.Ping:output_type -> kobecal.miniprogram.carparking.v1.PingResponse
+	8,  // 48: kobecal.miniprogram.carparking.v1.CarParkingService.ListNearbyParkingLots:output_type -> kobecal.miniprogram.carparking.v1.ListNearbyParkingLotsResponse
+	11, // 49: kobecal.miniprogram.carparking.v1.CarParkingService.CheckCachedParkingLots:output_type -> kobecal.miniprogram.carparking.v1.CheckCachedParkingLotsResponse
+	13, // 50: kobecal.miniprogram.carparking.v1.CarParkingService.ReverseGeocode:output_type -> kobecal.miniprogram.carparking.v1.ReverseGeocodeResponse
+	15, // 51: kobecal.miniprogram.carparking.v1.CarParkingService.GetParkingLot:output_type -> kobecal.miniprogram.carparking.v1.GetParkingLotResponse
+	17, // 52: kobecal.miniprogram.carparking.v1.CarParkingService.CreateParkingLot:output_type -> kobecal.miniprogram.carparking.v1.CreateParkingLotResponse
+	19, // 53: kobecal.miniprogram.carparking.v1.CarParkingService.UpdateParkingLot:output_type -> kobecal.miniprogram.carparking.v1.UpdateParkingLotResponse
+	21, // 54: kobecal.miniprogram.carparking.v1.CarParkingService.DeleteParkingLot:output_type -> kobecal.miniprogram.carparking.v1.DeleteParkingLotResponse
+	23, // 55: kobecal.miniprogram.carparking.v1.CarParkingService.ListMyParkingLots:output_type -> kobecal.miniprogram.carparking.v1.ListMyParkingLotsResponse
+	25, // 56: kobecal.miniprogram.carparking.v1.CarParkingService.ListParkingLotsForReview:output_type -> kobecal.miniprogram.carparking.v1.ListParkingLotsForReviewResponse
+	27, // 57: kobecal.miniprogram.carparking.v1.CarParkingService.ReviewParkingLot:output_type -> kobecal.miniprogram.carparking.v1.ReviewParkingLotResponse
+	29, // 58: kobecal.miniprogram.carparking.v1.CarParkingService.FavoriteParkingLot:output_type -> kobecal.miniprogram.carparking.v1.FavoriteParkingLotResponse
+	31, // 59: kobecal.miniprogram.carparking.v1.CarParkingService.UnfavoriteParkingLot:output_type -> kobecal.miniprogram.carparking.v1.UnfavoriteParkingLotResponse
+	33, // 60: kobecal.miniprogram.carparking.v1.CarParkingService.ListFavoriteParkingLots:output_type -> kobecal.miniprogram.carparking.v1.ListFavoriteParkingLotsResponse
+	35, // 61: kobecal.miniprogram.carparking.v1.CarParkingService.ReportParkingLotOutdated:output_type -> kobecal.miniprogram.carparking.v1.ReportParkingLotOutdatedResponse
+	37, // 62: kobecal.miniprogram.carparking.v1.CarParkingService.ListOutdatedReports:output_type -> kobecal.miniprogram.carparking.v1.ListOutdatedReportsResponse
+	47, // [47:63] is the sub-list for method output_type
+	31, // [31:47] is the sub-list for method input_type
+	31, // [31:31] is the sub-list for extension type_name
+	31, // [31:31] is the sub-list for extension extendee
+	0,  // [0:31] is the sub-list for field type_name
 }
 
 func init() { file_kobecal_miniprogram_carparking_v1_carparking_proto_init() }
@@ -2235,7 +2567,7 @@ func file_kobecal_miniprogram_carparking_v1_carparking_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDesc), len(file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   32,
+			NumMessages:   37,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

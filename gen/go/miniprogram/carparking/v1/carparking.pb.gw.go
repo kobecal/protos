@@ -91,6 +91,60 @@ func local_request_CarParkingService_ListNearbyParkingLots_0(ctx context.Context
 	return msg, metadata, err
 }
 
+func request_CarParkingService_CheckCachedParkingLots_0(ctx context.Context, marshaler runtime.Marshaler, client CarParkingServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq CheckCachedParkingLotsRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if req.Body != nil {
+		_, _ = io.Copy(io.Discard, req.Body)
+	}
+	msg, err := client.CheckCachedParkingLots(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_CarParkingService_CheckCachedParkingLots_0(ctx context.Context, marshaler runtime.Marshaler, server CarParkingServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq CheckCachedParkingLotsRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.CheckCachedParkingLots(ctx, &protoReq)
+	return msg, metadata, err
+}
+
+func request_CarParkingService_ReverseGeocode_0(ctx context.Context, marshaler runtime.Marshaler, client CarParkingServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq ReverseGeocodeRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if req.Body != nil {
+		_, _ = io.Copy(io.Discard, req.Body)
+	}
+	msg, err := client.ReverseGeocode(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_CarParkingService_ReverseGeocode_0(ctx context.Context, marshaler runtime.Marshaler, server CarParkingServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq ReverseGeocodeRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := server.ReverseGeocode(ctx, &protoReq)
+	return msg, metadata, err
+}
+
 func request_CarParkingService_GetParkingLot_0(ctx context.Context, marshaler runtime.Marshaler, client CarParkingServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq GetParkingLotRequest
@@ -573,7 +627,7 @@ func RegisterCarParkingServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/Ping", runtime.WithHTTPPathPattern("/v1/ping"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/Ping", runtime.WithHTTPPathPattern("/car-parking/v1/ping"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -593,7 +647,7 @@ func RegisterCarParkingServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListNearbyParkingLots", runtime.WithHTTPPathPattern("/v1/parking-lots:nearby"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListNearbyParkingLots", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots:nearby"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -607,13 +661,53 @@ func RegisterCarParkingServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		}
 		forward_CarParkingService_ListNearbyParkingLots_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodPost, pattern_CarParkingService_CheckCachedParkingLots_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/CheckCachedParkingLots", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots:check-cached"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_CarParkingService_CheckCachedParkingLots_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_CarParkingService_CheckCachedParkingLots_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_CarParkingService_ReverseGeocode_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ReverseGeocode", runtime.WithHTTPPathPattern("/car-parking/v1/geocode:reverse"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_CarParkingService_ReverseGeocode_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_CarParkingService_ReverseGeocode_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	mux.Handle(http.MethodGet, pattern_CarParkingService_GetParkingLot_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/GetParkingLot", runtime.WithHTTPPathPattern("/v1/parking-lots/{parking_lot_id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/GetParkingLot", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots/{parking_lot_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -633,7 +727,7 @@ func RegisterCarParkingServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/CreateParkingLot", runtime.WithHTTPPathPattern("/v1/parking-lots"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/CreateParkingLot", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -653,7 +747,7 @@ func RegisterCarParkingServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/UpdateParkingLot", runtime.WithHTTPPathPattern("/v1/parking-lots/{parking_lot_id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/UpdateParkingLot", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots/{parking_lot_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -673,7 +767,7 @@ func RegisterCarParkingServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/DeleteParkingLot", runtime.WithHTTPPathPattern("/v1/parking-lots/{parking_lot_id}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/DeleteParkingLot", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots/{parking_lot_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -693,7 +787,7 @@ func RegisterCarParkingServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListMyParkingLots", runtime.WithHTTPPathPattern("/v1/my/parking-lots"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListMyParkingLots", runtime.WithHTTPPathPattern("/car-parking/v1/my/parking-lots"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -713,7 +807,7 @@ func RegisterCarParkingServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListParkingLotsForReview", runtime.WithHTTPPathPattern("/v1/admin/parking-lots:for-review"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListParkingLotsForReview", runtime.WithHTTPPathPattern("/car-parking/v1/admin/parking-lots:for-review"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -733,7 +827,7 @@ func RegisterCarParkingServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ReviewParkingLot", runtime.WithHTTPPathPattern("/v1/parking-lots/{parking_lot_id}:review"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ReviewParkingLot", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots/{parking_lot_id}:review"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -753,7 +847,7 @@ func RegisterCarParkingServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/FavoriteParkingLot", runtime.WithHTTPPathPattern("/v1/parking-lots/{parking_lot_id}:favorite"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/FavoriteParkingLot", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots/{parking_lot_id}:favorite"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -773,7 +867,7 @@ func RegisterCarParkingServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/UnfavoriteParkingLot", runtime.WithHTTPPathPattern("/v1/parking-lots/{parking_lot_id}:unfavorite"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/UnfavoriteParkingLot", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots/{parking_lot_id}:unfavorite"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -793,7 +887,7 @@ func RegisterCarParkingServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListFavoriteParkingLots", runtime.WithHTTPPathPattern("/v1/favorites/parking-lots"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListFavoriteParkingLots", runtime.WithHTTPPathPattern("/car-parking/v1/favorites/parking-lots"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -813,7 +907,7 @@ func RegisterCarParkingServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ReportParkingLotOutdated", runtime.WithHTTPPathPattern("/v1/parking-lots/{parking_lot_id}:report-outdated"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ReportParkingLotOutdated", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots/{parking_lot_id}:report-outdated"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -833,7 +927,7 @@ func RegisterCarParkingServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListOutdatedReports", runtime.WithHTTPPathPattern("/v1/admin/outdated-reports"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListOutdatedReports", runtime.WithHTTPPathPattern("/car-parking/v1/admin/outdated-reports"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -891,7 +985,7 @@ func RegisterCarParkingServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/Ping", runtime.WithHTTPPathPattern("/v1/ping"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/Ping", runtime.WithHTTPPathPattern("/car-parking/v1/ping"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -908,7 +1002,7 @@ func RegisterCarParkingServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListNearbyParkingLots", runtime.WithHTTPPathPattern("/v1/parking-lots:nearby"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListNearbyParkingLots", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots:nearby"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -921,11 +1015,45 @@ func RegisterCarParkingServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		}
 		forward_CarParkingService_ListNearbyParkingLots_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodPost, pattern_CarParkingService_CheckCachedParkingLots_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/CheckCachedParkingLots", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots:check-cached"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_CarParkingService_CheckCachedParkingLots_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_CarParkingService_CheckCachedParkingLots_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_CarParkingService_ReverseGeocode_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ReverseGeocode", runtime.WithHTTPPathPattern("/car-parking/v1/geocode:reverse"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_CarParkingService_ReverseGeocode_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_CarParkingService_ReverseGeocode_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	mux.Handle(http.MethodGet, pattern_CarParkingService_GetParkingLot_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/GetParkingLot", runtime.WithHTTPPathPattern("/v1/parking-lots/{parking_lot_id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/GetParkingLot", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots/{parking_lot_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -942,7 +1070,7 @@ func RegisterCarParkingServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/CreateParkingLot", runtime.WithHTTPPathPattern("/v1/parking-lots"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/CreateParkingLot", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -959,7 +1087,7 @@ func RegisterCarParkingServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/UpdateParkingLot", runtime.WithHTTPPathPattern("/v1/parking-lots/{parking_lot_id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/UpdateParkingLot", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots/{parking_lot_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -976,7 +1104,7 @@ func RegisterCarParkingServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/DeleteParkingLot", runtime.WithHTTPPathPattern("/v1/parking-lots/{parking_lot_id}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/DeleteParkingLot", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots/{parking_lot_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -993,7 +1121,7 @@ func RegisterCarParkingServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListMyParkingLots", runtime.WithHTTPPathPattern("/v1/my/parking-lots"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListMyParkingLots", runtime.WithHTTPPathPattern("/car-parking/v1/my/parking-lots"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1010,7 +1138,7 @@ func RegisterCarParkingServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListParkingLotsForReview", runtime.WithHTTPPathPattern("/v1/admin/parking-lots:for-review"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListParkingLotsForReview", runtime.WithHTTPPathPattern("/car-parking/v1/admin/parking-lots:for-review"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1027,7 +1155,7 @@ func RegisterCarParkingServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ReviewParkingLot", runtime.WithHTTPPathPattern("/v1/parking-lots/{parking_lot_id}:review"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ReviewParkingLot", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots/{parking_lot_id}:review"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1044,7 +1172,7 @@ func RegisterCarParkingServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/FavoriteParkingLot", runtime.WithHTTPPathPattern("/v1/parking-lots/{parking_lot_id}:favorite"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/FavoriteParkingLot", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots/{parking_lot_id}:favorite"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1061,7 +1189,7 @@ func RegisterCarParkingServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/UnfavoriteParkingLot", runtime.WithHTTPPathPattern("/v1/parking-lots/{parking_lot_id}:unfavorite"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/UnfavoriteParkingLot", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots/{parking_lot_id}:unfavorite"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1078,7 +1206,7 @@ func RegisterCarParkingServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListFavoriteParkingLots", runtime.WithHTTPPathPattern("/v1/favorites/parking-lots"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListFavoriteParkingLots", runtime.WithHTTPPathPattern("/car-parking/v1/favorites/parking-lots"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1095,7 +1223,7 @@ func RegisterCarParkingServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ReportParkingLotOutdated", runtime.WithHTTPPathPattern("/v1/parking-lots/{parking_lot_id}:report-outdated"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ReportParkingLotOutdated", runtime.WithHTTPPathPattern("/car-parking/v1/parking-lots/{parking_lot_id}:report-outdated"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1112,7 +1240,7 @@ func RegisterCarParkingServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListOutdatedReports", runtime.WithHTTPPathPattern("/v1/admin/outdated-reports"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/kobecal.miniprogram.carparking.v1.CarParkingService/ListOutdatedReports", runtime.WithHTTPPathPattern("/car-parking/v1/admin/outdated-reports"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1129,25 +1257,29 @@ func RegisterCarParkingServiceHandlerClient(ctx context.Context, mux *runtime.Se
 }
 
 var (
-	pattern_CarParkingService_Ping_0                     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "ping"}, ""))
-	pattern_CarParkingService_ListNearbyParkingLots_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "parking-lots"}, "nearby"))
-	pattern_CarParkingService_GetParkingLot_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "parking-lots", "parking_lot_id"}, ""))
-	pattern_CarParkingService_CreateParkingLot_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "parking-lots"}, ""))
-	pattern_CarParkingService_UpdateParkingLot_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "parking-lots", "parking_lot_id"}, ""))
-	pattern_CarParkingService_DeleteParkingLot_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "parking-lots", "parking_lot_id"}, ""))
-	pattern_CarParkingService_ListMyParkingLots_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "my", "parking-lots"}, ""))
-	pattern_CarParkingService_ListParkingLotsForReview_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "admin", "parking-lots"}, "for-review"))
-	pattern_CarParkingService_ReviewParkingLot_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "parking-lots", "parking_lot_id"}, "review"))
-	pattern_CarParkingService_FavoriteParkingLot_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "parking-lots", "parking_lot_id"}, "favorite"))
-	pattern_CarParkingService_UnfavoriteParkingLot_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "parking-lots", "parking_lot_id"}, "unfavorite"))
-	pattern_CarParkingService_ListFavoriteParkingLots_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "favorites", "parking-lots"}, ""))
-	pattern_CarParkingService_ReportParkingLotOutdated_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "parking-lots", "parking_lot_id"}, "report-outdated"))
-	pattern_CarParkingService_ListOutdatedReports_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "admin", "outdated-reports"}, ""))
+	pattern_CarParkingService_Ping_0                     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"car-parking", "v1", "ping"}, ""))
+	pattern_CarParkingService_ListNearbyParkingLots_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"car-parking", "v1", "parking-lots"}, "nearby"))
+	pattern_CarParkingService_CheckCachedParkingLots_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"car-parking", "v1", "parking-lots"}, "check-cached"))
+	pattern_CarParkingService_ReverseGeocode_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"car-parking", "v1", "geocode"}, "reverse"))
+	pattern_CarParkingService_GetParkingLot_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"car-parking", "v1", "parking-lots", "parking_lot_id"}, ""))
+	pattern_CarParkingService_CreateParkingLot_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"car-parking", "v1", "parking-lots"}, ""))
+	pattern_CarParkingService_UpdateParkingLot_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"car-parking", "v1", "parking-lots", "parking_lot_id"}, ""))
+	pattern_CarParkingService_DeleteParkingLot_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"car-parking", "v1", "parking-lots", "parking_lot_id"}, ""))
+	pattern_CarParkingService_ListMyParkingLots_0        = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"car-parking", "v1", "my", "parking-lots"}, ""))
+	pattern_CarParkingService_ListParkingLotsForReview_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"car-parking", "v1", "admin", "parking-lots"}, "for-review"))
+	pattern_CarParkingService_ReviewParkingLot_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"car-parking", "v1", "parking-lots", "parking_lot_id"}, "review"))
+	pattern_CarParkingService_FavoriteParkingLot_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"car-parking", "v1", "parking-lots", "parking_lot_id"}, "favorite"))
+	pattern_CarParkingService_UnfavoriteParkingLot_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"car-parking", "v1", "parking-lots", "parking_lot_id"}, "unfavorite"))
+	pattern_CarParkingService_ListFavoriteParkingLots_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"car-parking", "v1", "favorites", "parking-lots"}, ""))
+	pattern_CarParkingService_ReportParkingLotOutdated_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"car-parking", "v1", "parking-lots", "parking_lot_id"}, "report-outdated"))
+	pattern_CarParkingService_ListOutdatedReports_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"car-parking", "v1", "admin", "outdated-reports"}, ""))
 )
 
 var (
 	forward_CarParkingService_Ping_0                     = runtime.ForwardResponseMessage
 	forward_CarParkingService_ListNearbyParkingLots_0    = runtime.ForwardResponseMessage
+	forward_CarParkingService_CheckCachedParkingLots_0   = runtime.ForwardResponseMessage
+	forward_CarParkingService_ReverseGeocode_0           = runtime.ForwardResponseMessage
 	forward_CarParkingService_GetParkingLot_0            = runtime.ForwardResponseMessage
 	forward_CarParkingService_CreateParkingLot_0         = runtime.ForwardResponseMessage
 	forward_CarParkingService_UpdateParkingLot_0         = runtime.ForwardResponseMessage

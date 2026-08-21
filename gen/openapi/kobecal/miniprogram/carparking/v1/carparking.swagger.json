@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "miniprogram/carparking",
-    "version": "0.3.0"
+    "version": "0.6.0"
   },
   "tags": [
     {
@@ -16,7 +16,7 @@
     "application/json"
   ],
   "paths": {
-    "/v1/admin/outdated-reports": {
+    "/car-parking/v1/admin/outdated-reports": {
       "get": {
         "summary": "ListOutdatedReports lists parking lots with outstanding outdated reports\nso admins can verify and resolve them. Admin only.",
         "operationId": "CarParkingService_ListOutdatedReports",
@@ -50,7 +50,7 @@
         ]
       }
     },
-    "/v1/admin/parking-lots:for-review": {
+    "/car-parking/v1/admin/parking-lots:for-review": {
       "get": {
         "summary": "ListParkingLotsForReview lists submissions for the admin review queue,\nnewest first. Admin only.",
         "operationId": "CarParkingService_ListParkingLotsForReview",
@@ -99,7 +99,7 @@
         ]
       }
     },
-    "/v1/favorites/parking-lots": {
+    "/car-parking/v1/favorites/parking-lots": {
       "get": {
         "summary": "ListFavoriteParkingLots lists the caller's favorite parking lots, newest\nfavorite first.",
         "operationId": "CarParkingService_ListFavoriteParkingLots",
@@ -133,7 +133,35 @@
         ]
       }
     },
-    "/v1/my/parking-lots": {
+    "/car-parking/v1/geocode:reverse": {
+      "post": {
+        "summary": "ReverseGeocode resolves a coordinate pair into a human-readable parking\nlot location (POI name, address, city). The server holds the geocoding\nservice credentials; the mini program only sends its coordinates, so the\nkey never leaves the backend.",
+        "operationId": "CarParkingService_ReverseGeocode",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ReverseGeocodeResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "ReverseGeocodeRequest is the input to ReverseGeocode.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ReverseGeocodeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarParkingService"
+        ]
+      }
+    },
+    "/car-parking/v1/my/parking-lots": {
       "get": {
         "summary": "ListMyParkingLots lists the caller's submissions, including lots awaiting\nreview or rejected.",
         "operationId": "CarParkingService_ListMyParkingLots",
@@ -167,9 +195,9 @@
         ]
       }
     },
-    "/v1/parking-lots": {
+    "/car-parking/v1/parking-lots": {
       "post": {
-        "summary": "CreateParkingLot submits a new parking lot for review. The lot is only\nvisible to the submitter until a reviewer approves it.",
+        "summary": "CreateParkingLot submits a new parking lot for review. The lot is\nimmediately usable by its submitter and becomes publicly visible once a\nreviewer approves it.",
         "operationId": "CarParkingService_CreateParkingLot",
         "responses": {
           "200": {
@@ -195,7 +223,7 @@
         ]
       }
     },
-    "/v1/parking-lots/{parking_lot_id}": {
+    "/car-parking/v1/parking-lots/{parking_lot_id}": {
       "get": {
         "summary": "GetParkingLot returns one parking lot. Pending and rejected lots are only\nvisible to their submitter (and reviewers); disabled lots are only visible\nto their submitter and users who favorited them.",
         "operationId": "CarParkingService_GetParkingLot",
@@ -277,7 +305,7 @@
         ]
       }
     },
-    "/v1/parking-lots/{parking_lot_id}:favorite": {
+    "/car-parking/v1/parking-lots/{parking_lot_id}:favorite": {
       "post": {
         "summary": "FavoriteParkingLot adds an approved parking lot to the caller's favorites.",
         "operationId": "CarParkingService_FavoriteParkingLot",
@@ -311,7 +339,7 @@
         ]
       }
     },
-    "/v1/parking-lots/{parking_lot_id}:report-outdated": {
+    "/car-parking/v1/parking-lots/{parking_lot_id}:report-outdated": {
       "post": {
         "summary": "ReportParkingLotOutdated reports that an approved parking lot's\ninformation is outdated. Each user can report a lot once; reports demote\nthe lot in nearby listings and surface a warning to other users.",
         "operationId": "CarParkingService_ReportParkingLotOutdated",
@@ -345,7 +373,7 @@
         ]
       }
     },
-    "/v1/parking-lots/{parking_lot_id}:review": {
+    "/car-parking/v1/parking-lots/{parking_lot_id}:review": {
       "post": {
         "summary": "ReviewParkingLot approves or rejects a pending submission. Admin only.",
         "operationId": "CarParkingService_ReviewParkingLot",
@@ -379,7 +407,7 @@
         ]
       }
     },
-    "/v1/parking-lots/{parking_lot_id}:unfavorite": {
+    "/car-parking/v1/parking-lots/{parking_lot_id}:unfavorite": {
       "post": {
         "summary": "UnfavoriteParkingLot removes a parking lot from the caller's favorites.",
         "operationId": "CarParkingService_UnfavoriteParkingLot",
@@ -413,7 +441,35 @@
         ]
       }
     },
-    "/v1/parking-lots:nearby": {
+    "/car-parking/v1/parking-lots:check-cached": {
+      "post": {
+        "summary": "CheckCachedParkingLots is the lightweight staleness probe for the mini\nprogram's local parking-lot cache. The client sends a snapshot of the\nlots it cached (id + last-known updated_at); the server returns only the\nids whose cached copy is no longer current (content changed, or the lot\nno longer exists), so the client can drop or refresh them. This keeps\nthe transfer tiny even with 100 cached lots.",
+        "operationId": "CarParkingService_CheckCachedParkingLots",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CheckCachedParkingLotsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "CheckCachedParkingLotsRequest carries the client's cache snapshot.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CheckCachedParkingLotsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarParkingService"
+        ]
+      }
+    },
+    "/car-parking/v1/parking-lots:nearby": {
       "get": {
         "summary": "ListNearbyParkingLots returns approved, enabled parking lots near the\ncaller's location, sorted by distance. Lots with outdated reports are\ndemoted.",
         "operationId": "CarParkingService_ListNearbyParkingLots",
@@ -463,7 +519,7 @@
         ]
       }
     },
-    "/v1/ping": {
+    "/car-parking/v1/ping": {
       "get": {
         "summary": "Ping returns a liveness response.",
         "operationId": "CarParkingService_Ping",
@@ -517,6 +573,48 @@
         }
       },
       "description": "UpdateParkingLotRequest is the input to UpdateParkingLot."
+    },
+    "v1CachedParkingLot": {
+      "type": "object",
+      "properties": {
+        "parking_lot_id": {
+          "type": "string",
+          "description": "parking_lot_id is the cached lot's id. Required."
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "updated_at is the cached lot's last-known updated_at. Required."
+        }
+      },
+      "description": "CachedParkingLot is one entry of the client's local cache snapshot."
+    },
+    "v1CheckCachedParkingLotsRequest": {
+      "type": "object",
+      "properties": {
+        "cached_lots": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1CachedParkingLot"
+          },
+          "description": "cached_lots is the client's cached lots (id + last-known updated_at).\nAt most 200 refs are accepted; extra refs are dropped."
+        }
+      },
+      "description": "CheckCachedParkingLotsRequest carries the client's cache snapshot."
+    },
+    "v1CheckCachedParkingLotsResponse": {
+      "type": "object",
+      "properties": {
+        "stale_parking_lot_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "stale_parking_lot_ids lists the cached lot ids whose copy is no longer\ncurrent: the lot no longer exists, or its updated_at differs from the\nclient's snapshot. Lots not listed are still current and can be kept."
+        }
+      },
+      "description": "CheckCachedParkingLotsResponse is the output of CheckCachedParkingLots."
     },
     "v1CreateParkingLotRequest": {
       "type": "object",
@@ -770,6 +868,10 @@
           "type": "integer",
           "format": "int32",
           "description": "outdated_report_count is the number of users that reported this lot as\noutdated. It resets to zero when the submitter updates the content."
+        },
+        "city": {
+          "type": "string",
+          "description": "city is the city where the parking lot is located; every address is\nrequired to carry one so the mini program can filter its local cache to\nthe user's current city without a server round-trip."
         }
       },
       "description": "ParkingLot is the domain entity of a parking lot: immutable facts plus\nserver-maintained state. Per-request view data (distance, per-caller flags)\nlives in ParkingLotView instead."
@@ -804,14 +906,18 @@
           "items": {
             "type": "string"
           },
-          "description": "price_image_urls point to images showing the pricing and charging rules.\nAt least one is required."
+          "description": "price_image_urls point to images showing the pricing and charging rules.\nOptional; at least one of price_image_urls and payment_qr_image_urls is\nrequired."
         },
         "payment_qr_image_urls": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "payment_qr_image_urls point to payment QR code images accepted at the lot.\nAt least one is required."
+          "description": "payment_qr_image_urls point to payment QR code images accepted at the lot.\nOptional; at least one of price_image_urls and payment_qr_image_urls is\nrequired."
+        },
+        "city": {
+          "type": "string",
+          "description": "city is the city where the parking lot is located. Required."
         }
       },
       "description": "ParkingLotDraft is the user-editable content of a parking lot, used when\ncreating or updating a submission."
@@ -851,6 +957,10 @@
         "outdated_reported_by_me": {
           "type": "boolean",
           "description": "outdated_reported_by_me is true when the caller already reported this lot\nas outdated."
+        },
+        "owned_by_me": {
+          "type": "boolean",
+          "description": "owned_by_me is true when the caller submitted this parking lot; the\nfrontend uses it to offer edit/remove actions on the caller's own lots."
         }
       },
       "description": "ParkingLotView wraps a parking lot with request-context data: distance from\nthe caller's location and per-caller flags. It is the response payload for\ndiscovery and list RPCs; the wrapped ParkingLot carries domain fields only."
@@ -879,6 +989,40 @@
         }
       },
       "description": "ReportParkingLotOutdatedResponse is the output of\nReportParkingLotOutdated."
+    },
+    "v1ReverseGeocodeRequest": {
+      "type": "object",
+      "properties": {
+        "latitude": {
+          "type": "number",
+          "format": "double",
+          "description": "latitude is the WGS-84 latitude of the query point. Required."
+        },
+        "longitude": {
+          "type": "number",
+          "format": "double",
+          "description": "longitude is the WGS-84 longitude of the query point. Required."
+        }
+      },
+      "description": "ReverseGeocodeRequest is the input to ReverseGeocode."
+    },
+    "v1ReverseGeocodeResponse": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "name is a nearby POI / place name suggested for the parking lot."
+        },
+        "address": {
+          "type": "string",
+          "description": "address is the human-readable address of the query point."
+        },
+        "city": {
+          "type": "string",
+          "description": "city is the city the query point belongs to."
+        }
+      },
+      "description": "ReverseGeocodeResponse is the output of ReverseGeocode."
     },
     "v1ReviewDecision": {
       "type": "string",

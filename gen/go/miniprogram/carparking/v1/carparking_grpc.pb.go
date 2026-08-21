@@ -25,6 +25,8 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	CarParkingService_Ping_FullMethodName                     = "/kobecal.miniprogram.carparking.v1.CarParkingService/Ping"
 	CarParkingService_ListNearbyParkingLots_FullMethodName    = "/kobecal.miniprogram.carparking.v1.CarParkingService/ListNearbyParkingLots"
+	CarParkingService_CheckCachedParkingLots_FullMethodName   = "/kobecal.miniprogram.carparking.v1.CarParkingService/CheckCachedParkingLots"
+	CarParkingService_ReverseGeocode_FullMethodName           = "/kobecal.miniprogram.carparking.v1.CarParkingService/ReverseGeocode"
 	CarParkingService_GetParkingLot_FullMethodName            = "/kobecal.miniprogram.carparking.v1.CarParkingService/GetParkingLot"
 	CarParkingService_CreateParkingLot_FullMethodName         = "/kobecal.miniprogram.carparking.v1.CarParkingService/CreateParkingLot"
 	CarParkingService_UpdateParkingLot_FullMethodName         = "/kobecal.miniprogram.carparking.v1.CarParkingService/UpdateParkingLot"
@@ -52,12 +54,25 @@ type CarParkingServiceClient interface {
 	// caller's location, sorted by distance. Lots with outdated reports are
 	// demoted.
 	ListNearbyParkingLots(ctx context.Context, in *ListNearbyParkingLotsRequest, opts ...grpc.CallOption) (*ListNearbyParkingLotsResponse, error)
+	// CheckCachedParkingLots is the lightweight staleness probe for the mini
+	// program's local parking-lot cache. The client sends a snapshot of the
+	// lots it cached (id + last-known updated_at); the server returns only the
+	// ids whose cached copy is no longer current (content changed, or the lot
+	// no longer exists), so the client can drop or refresh them. This keeps
+	// the transfer tiny even with 100 cached lots.
+	CheckCachedParkingLots(ctx context.Context, in *CheckCachedParkingLotsRequest, opts ...grpc.CallOption) (*CheckCachedParkingLotsResponse, error)
+	// ReverseGeocode resolves a coordinate pair into a human-readable parking
+	// lot location (POI name, address, city). The server holds the geocoding
+	// service credentials; the mini program only sends its coordinates, so the
+	// key never leaves the backend.
+	ReverseGeocode(ctx context.Context, in *ReverseGeocodeRequest, opts ...grpc.CallOption) (*ReverseGeocodeResponse, error)
 	// GetParkingLot returns one parking lot. Pending and rejected lots are only
 	// visible to their submitter (and reviewers); disabled lots are only visible
 	// to their submitter and users who favorited them.
 	GetParkingLot(ctx context.Context, in *GetParkingLotRequest, opts ...grpc.CallOption) (*GetParkingLotResponse, error)
-	// CreateParkingLot submits a new parking lot for review. The lot is only
-	// visible to the submitter until a reviewer approves it.
+	// CreateParkingLot submits a new parking lot for review. The lot is
+	// immediately usable by its submitter and becomes publicly visible once a
+	// reviewer approves it.
 	CreateParkingLot(ctx context.Context, in *CreateParkingLotRequest, opts ...grpc.CallOption) (*CreateParkingLotResponse, error)
 	// UpdateParkingLot fully replaces a parking lot owned by the caller. Only
 	// pending or rejected lots can be edited; editing resubmits the lot for
@@ -113,6 +128,26 @@ func (c *carParkingServiceClient) ListNearbyParkingLots(ctx context.Context, in 
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListNearbyParkingLotsResponse)
 	err := c.cc.Invoke(ctx, CarParkingService_ListNearbyParkingLots_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carParkingServiceClient) CheckCachedParkingLots(ctx context.Context, in *CheckCachedParkingLotsRequest, opts ...grpc.CallOption) (*CheckCachedParkingLotsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CheckCachedParkingLotsResponse)
+	err := c.cc.Invoke(ctx, CarParkingService_CheckCachedParkingLots_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carParkingServiceClient) ReverseGeocode(ctx context.Context, in *ReverseGeocodeRequest, opts ...grpc.CallOption) (*ReverseGeocodeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReverseGeocodeResponse)
+	err := c.cc.Invoke(ctx, CarParkingService_ReverseGeocode_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -252,12 +287,25 @@ type CarParkingServiceServer interface {
 	// caller's location, sorted by distance. Lots with outdated reports are
 	// demoted.
 	ListNearbyParkingLots(context.Context, *ListNearbyParkingLotsRequest) (*ListNearbyParkingLotsResponse, error)
+	// CheckCachedParkingLots is the lightweight staleness probe for the mini
+	// program's local parking-lot cache. The client sends a snapshot of the
+	// lots it cached (id + last-known updated_at); the server returns only the
+	// ids whose cached copy is no longer current (content changed, or the lot
+	// no longer exists), so the client can drop or refresh them. This keeps
+	// the transfer tiny even with 100 cached lots.
+	CheckCachedParkingLots(context.Context, *CheckCachedParkingLotsRequest) (*CheckCachedParkingLotsResponse, error)
+	// ReverseGeocode resolves a coordinate pair into a human-readable parking
+	// lot location (POI name, address, city). The server holds the geocoding
+	// service credentials; the mini program only sends its coordinates, so the
+	// key never leaves the backend.
+	ReverseGeocode(context.Context, *ReverseGeocodeRequest) (*ReverseGeocodeResponse, error)
 	// GetParkingLot returns one parking lot. Pending and rejected lots are only
 	// visible to their submitter (and reviewers); disabled lots are only visible
 	// to their submitter and users who favorited them.
 	GetParkingLot(context.Context, *GetParkingLotRequest) (*GetParkingLotResponse, error)
-	// CreateParkingLot submits a new parking lot for review. The lot is only
-	// visible to the submitter until a reviewer approves it.
+	// CreateParkingLot submits a new parking lot for review. The lot is
+	// immediately usable by its submitter and becomes publicly visible once a
+	// reviewer approves it.
 	CreateParkingLot(context.Context, *CreateParkingLotRequest) (*CreateParkingLotResponse, error)
 	// UpdateParkingLot fully replaces a parking lot owned by the caller. Only
 	// pending or rejected lots can be edited; editing resubmits the lot for
@@ -304,6 +352,12 @@ func (UnimplementedCarParkingServiceServer) Ping(context.Context, *PingRequest) 
 }
 func (UnimplementedCarParkingServiceServer) ListNearbyParkingLots(context.Context, *ListNearbyParkingLotsRequest) (*ListNearbyParkingLotsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListNearbyParkingLots not implemented")
+}
+func (UnimplementedCarParkingServiceServer) CheckCachedParkingLots(context.Context, *CheckCachedParkingLotsRequest) (*CheckCachedParkingLotsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckCachedParkingLots not implemented")
+}
+func (UnimplementedCarParkingServiceServer) ReverseGeocode(context.Context, *ReverseGeocodeRequest) (*ReverseGeocodeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReverseGeocode not implemented")
 }
 func (UnimplementedCarParkingServiceServer) GetParkingLot(context.Context, *GetParkingLotRequest) (*GetParkingLotResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetParkingLot not implemented")
@@ -394,6 +448,42 @@ func _CarParkingService_ListNearbyParkingLots_Handler(srv interface{}, ctx conte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CarParkingServiceServer).ListNearbyParkingLots(ctx, req.(*ListNearbyParkingLotsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarParkingService_CheckCachedParkingLots_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckCachedParkingLotsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarParkingServiceServer).CheckCachedParkingLots(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarParkingService_CheckCachedParkingLots_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarParkingServiceServer).CheckCachedParkingLots(ctx, req.(*CheckCachedParkingLotsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarParkingService_ReverseGeocode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReverseGeocodeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarParkingServiceServer).ReverseGeocode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarParkingService_ReverseGeocode_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarParkingServiceServer).ReverseGeocode(ctx, req.(*ReverseGeocodeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -628,6 +718,14 @@ var CarParkingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListNearbyParkingLots",
 			Handler:    _CarParkingService_ListNearbyParkingLots_Handler,
+		},
+		{
+			MethodName: "CheckCachedParkingLots",
+			Handler:    _CarParkingService_CheckCachedParkingLots_Handler,
+		},
+		{
+			MethodName: "ReverseGeocode",
+			Handler:    _CarParkingService_ReverseGeocode_Handler,
 		},
 		{
 			MethodName: "GetParkingLot",

@@ -39,6 +39,9 @@ const (
 	CarParkingService_ListFavoriteParkingLots_FullMethodName  = "/kobecal.miniprogram.carparking.v1.CarParkingService/ListFavoriteParkingLots"
 	CarParkingService_ReportParkingLotOutdated_FullMethodName = "/kobecal.miniprogram.carparking.v1.CarParkingService/ReportParkingLotOutdated"
 	CarParkingService_ListOutdatedReports_FullMethodName      = "/kobecal.miniprogram.carparking.v1.CarParkingService/ListOutdatedReports"
+	CarParkingService_SubmitFeedback_FullMethodName           = "/kobecal.miniprogram.carparking.v1.CarParkingService/SubmitFeedback"
+	CarParkingService_ListFeedback_FullMethodName             = "/kobecal.miniprogram.carparking.v1.CarParkingService/ListFeedback"
+	CarParkingService_ResolveFeedback_FullMethodName          = "/kobecal.miniprogram.carparking.v1.CarParkingService/ResolveFeedback"
 )
 
 // CarParkingServiceClient is the client API for CarParkingService service.
@@ -104,6 +107,14 @@ type CarParkingServiceClient interface {
 	// ListOutdatedReports lists parking lots with outstanding outdated reports
 	// so admins can verify and resolve them. Admin only.
 	ListOutdatedReports(ctx context.Context, in *ListOutdatedReportsRequest, opts ...grpc.CallOption) (*ListOutdatedReportsResponse, error)
+	// SubmitFeedback records a user's feature request or issue report so admins
+	// can review it. The submitting user is taken from the request context.
+	SubmitFeedback(ctx context.Context, in *SubmitFeedbackRequest, opts ...grpc.CallOption) (*SubmitFeedbackResponse, error)
+	// ListFeedback lists submitted feedback, newest first, so admins can review
+	// and track user requests and issues. Admin only.
+	ListFeedback(ctx context.Context, in *ListFeedbackRequest, opts ...grpc.CallOption) (*ListFeedbackResponse, error)
+	// ResolveFeedback marks feedback as handled or reopens it. Admin only.
+	ResolveFeedback(ctx context.Context, in *ResolveFeedbackRequest, opts ...grpc.CallOption) (*ResolveFeedbackResponse, error)
 }
 
 type carParkingServiceClient struct {
@@ -274,6 +285,36 @@ func (c *carParkingServiceClient) ListOutdatedReports(ctx context.Context, in *L
 	return out, nil
 }
 
+func (c *carParkingServiceClient) SubmitFeedback(ctx context.Context, in *SubmitFeedbackRequest, opts ...grpc.CallOption) (*SubmitFeedbackResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SubmitFeedbackResponse)
+	err := c.cc.Invoke(ctx, CarParkingService_SubmitFeedback_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carParkingServiceClient) ListFeedback(ctx context.Context, in *ListFeedbackRequest, opts ...grpc.CallOption) (*ListFeedbackResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListFeedbackResponse)
+	err := c.cc.Invoke(ctx, CarParkingService_ListFeedback_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carParkingServiceClient) ResolveFeedback(ctx context.Context, in *ResolveFeedbackRequest, opts ...grpc.CallOption) (*ResolveFeedbackResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResolveFeedbackResponse)
+	err := c.cc.Invoke(ctx, CarParkingService_ResolveFeedback_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CarParkingServiceServer is the server API for CarParkingService service.
 // All implementations must embed UnimplementedCarParkingServiceServer
 // for forward compatibility.
@@ -337,6 +378,14 @@ type CarParkingServiceServer interface {
 	// ListOutdatedReports lists parking lots with outstanding outdated reports
 	// so admins can verify and resolve them. Admin only.
 	ListOutdatedReports(context.Context, *ListOutdatedReportsRequest) (*ListOutdatedReportsResponse, error)
+	// SubmitFeedback records a user's feature request or issue report so admins
+	// can review it. The submitting user is taken from the request context.
+	SubmitFeedback(context.Context, *SubmitFeedbackRequest) (*SubmitFeedbackResponse, error)
+	// ListFeedback lists submitted feedback, newest first, so admins can review
+	// and track user requests and issues. Admin only.
+	ListFeedback(context.Context, *ListFeedbackRequest) (*ListFeedbackResponse, error)
+	// ResolveFeedback marks feedback as handled or reopens it. Admin only.
+	ResolveFeedback(context.Context, *ResolveFeedbackRequest) (*ResolveFeedbackResponse, error)
 	mustEmbedUnimplementedCarParkingServiceServer()
 }
 
@@ -394,6 +443,15 @@ func (UnimplementedCarParkingServiceServer) ReportParkingLotOutdated(context.Con
 }
 func (UnimplementedCarParkingServiceServer) ListOutdatedReports(context.Context, *ListOutdatedReportsRequest) (*ListOutdatedReportsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListOutdatedReports not implemented")
+}
+func (UnimplementedCarParkingServiceServer) SubmitFeedback(context.Context, *SubmitFeedbackRequest) (*SubmitFeedbackResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SubmitFeedback not implemented")
+}
+func (UnimplementedCarParkingServiceServer) ListFeedback(context.Context, *ListFeedbackRequest) (*ListFeedbackResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListFeedback not implemented")
+}
+func (UnimplementedCarParkingServiceServer) ResolveFeedback(context.Context, *ResolveFeedbackRequest) (*ResolveFeedbackResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResolveFeedback not implemented")
 }
 func (UnimplementedCarParkingServiceServer) mustEmbedUnimplementedCarParkingServiceServer() {}
 func (UnimplementedCarParkingServiceServer) testEmbeddedByValue()                           {}
@@ -704,6 +762,60 @@ func _CarParkingService_ListOutdatedReports_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CarParkingService_SubmitFeedback_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubmitFeedbackRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarParkingServiceServer).SubmitFeedback(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarParkingService_SubmitFeedback_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarParkingServiceServer).SubmitFeedback(ctx, req.(*SubmitFeedbackRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarParkingService_ListFeedback_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListFeedbackRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarParkingServiceServer).ListFeedback(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarParkingService_ListFeedback_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarParkingServiceServer).ListFeedback(ctx, req.(*ListFeedbackRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarParkingService_ResolveFeedback_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResolveFeedbackRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarParkingServiceServer).ResolveFeedback(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarParkingService_ResolveFeedback_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarParkingServiceServer).ResolveFeedback(ctx, req.(*ResolveFeedbackRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CarParkingService_ServiceDesc is the grpc.ServiceDesc for CarParkingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -774,6 +886,18 @@ var CarParkingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListOutdatedReports",
 			Handler:    _CarParkingService_ListOutdatedReports_Handler,
+		},
+		{
+			MethodName: "SubmitFeedback",
+			Handler:    _CarParkingService_SubmitFeedback_Handler,
+		},
+		{
+			MethodName: "ListFeedback",
+			Handler:    _CarParkingService_ListFeedback_Handler,
+		},
+		{
+			MethodName: "ResolveFeedback",
+			Handler:    _CarParkingService_ResolveFeedback_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

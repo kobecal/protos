@@ -141,6 +141,29 @@ service CarParkingService {
   rpc ListOutdatedReports(ListOutdatedReportsRequest) returns (ListOutdatedReportsResponse) {
     option (google.api.http) = {get: "/car-parking/v1/admin/outdated-reports"};
   }
+
+  // SubmitFeedback records a user's feature request or issue report so admins
+  // can review it. The submitting user is taken from the request context.
+  rpc SubmitFeedback(SubmitFeedbackRequest) returns (SubmitFeedbackResponse) {
+    option (google.api.http) = {
+      post: "/car-parking/v1/feedback"
+      body: "*"
+    };
+  }
+
+  // ListFeedback lists submitted feedback, newest first, so admins can review
+  // and track user requests and issues. Admin only.
+  rpc ListFeedback(ListFeedbackRequest) returns (ListFeedbackResponse) {
+    option (google.api.http) = {get: "/car-parking/v1/admin/feedback"};
+  }
+
+  // ResolveFeedback marks feedback as handled or reopens it. Admin only.
+  rpc ResolveFeedback(ResolveFeedbackRequest) returns (ResolveFeedbackResponse) {
+    option (google.api.http) = {
+      post: "/car-parking/v1/admin/feedback/{feedback_id}:resolve"
+      body: "*"
+    };
+  }
 }
 
 // PingRequest is the input to Ping.
@@ -510,4 +533,91 @@ message OutdatedReport {
   string reporter_id = 2;
   // reported_at is when the report was submitted.
   google.protobuf.Timestamp reported_at = 3;
+}
+
+// FeedbackType discriminates the kind of user feedback.
+enum FeedbackType {
+  // FEEDBACK_TYPE_UNSPECIFIED is the zero value and is not valid input.
+  FEEDBACK_TYPE_UNSPECIFIED = 0;
+  // FEEDBACK_TYPE_FEATURE_REQUEST is a feature request from a user.
+  FEEDBACK_TYPE_FEATURE_REQUEST = 1;
+  // FEEDBACK_TYPE_ISSUE is a problem or bug report from a user.
+  FEEDBACK_TYPE_ISSUE = 2;
+}
+
+// FeedbackStatus tracks the admin triage state of feedback.
+enum FeedbackStatus {
+  // FEEDBACK_STATUS_UNSPECIFIED is the zero value and is not valid input.
+  FEEDBACK_STATUS_UNSPECIFIED = 0;
+  // FEEDBACK_STATUS_OPEN means the feedback has not been handled yet.
+  FEEDBACK_STATUS_OPEN = 1;
+  // FEEDBACK_STATUS_RESOLVED means an admin marked the feedback as handled.
+  FEEDBACK_STATUS_RESOLVED = 2;
+}
+
+// SubmitFeedbackRequest is the input to SubmitFeedback.
+message SubmitFeedbackRequest {
+  // type discriminates a feature request from an issue report. Required.
+  FeedbackType type = 1;
+  // content is the user's free-form feedback text. Required.
+  string content = 2;
+  // contact is an optional way to reach the user (e.g. a nickname or phone).
+  // The submitting user is already recorded server-side; this is only for the
+  // user to volunteer a way to be followed up with.
+  string contact = 3;
+}
+
+// SubmitFeedbackResponse returns the stored feedback with its server-assigned
+// id and timestamp.
+message SubmitFeedbackResponse {
+  // feedback is the stored feedback entry.
+  Feedback feedback = 1;
+}
+
+// Feedback is one user-submitted feedback entry.
+message Feedback {
+  // id is the stable identifier of the feedback entry.
+  string id = 1;
+  // type is the kind of feedback.
+  FeedbackType type = 2;
+  // content is the user's feedback text.
+  string content = 3;
+  // contact is the optional reach-back info volunteered by the user.
+  string contact = 4;
+  // status is the admin triage state.
+  FeedbackStatus status = 5;
+  // submitter_id is the user who submitted the feedback.
+  string submitter_id = 6;
+  // submitted_at is when the feedback was submitted.
+  google.protobuf.Timestamp submitted_at = 7;
+}
+
+// ListFeedbackRequest is the input to ListFeedback. Admin only.
+message ListFeedbackRequest {
+  // pagination controls page size and continuation.
+  kobecal.miniprogram.common.v1.Pagination pagination = 1;
+  // status optionally filters the list to one triage state. Unset returns all.
+  FeedbackStatus status = 2;
+}
+
+// ListFeedbackResponse is the output of ListFeedback.
+message ListFeedbackResponse {
+  // feedback is the page of feedback entries, newest first.
+  repeated Feedback feedback = 1;
+  // page_info carries pagination metadata.
+  kobecal.miniprogram.common.v1.PageInfo page_info = 2;
+}
+
+// ResolveFeedbackRequest is the input to ResolveFeedback. Admin only.
+message ResolveFeedbackRequest {
+  // feedback_id is the id of the feedback to update. Required.
+  string feedback_id = 1;
+  // status is the new triage state (RESOLVED to close, OPEN to reopen).
+  FeedbackStatus status = 2;
+}
+
+// ResolveFeedbackResponse returns the updated feedback entry.
+message ResolveFeedbackResponse {
+  // feedback is the updated feedback entry.
+  Feedback feedback = 1;
 }

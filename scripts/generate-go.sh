@@ -71,17 +71,22 @@ while IFS= read -r version_file; do
       fi
 
       dep_module="github.com/kobecal/protos/gen/go/${dep_namespace}/${dep_domain}"
-      if [[ "$dep_namespace" == "$namespace" ]]; then
-        dep_path="../${dep_domain}"
-      else
-        dep_path="../../${dep_namespace}/${dep_domain}"
+      # Reference the sibling module at its real published version. A nested
+      # `replace` to a local path is ignored by Go (replace only applies from
+      # the main module) and would break `go get` for consumers, so published
+      # modules must not carry one. The sibling must be tagged/released before
+      # the importing domain is generated with a resolvable require.
+      dep_version="$(sed -n '1p' "${ROOT}/proto/kobecal/${dep_namespace}/${dep_domain}/VERSION")"
+      if [[ ! "$dep_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "${relative_unit}: sibling ${dep_namespace}/${dep_domain} has invalid VERSION ${dep_version}" >&2
+        exit 1
       fi
-      go mod edit -replace="${dep_module}=${dep_path}"
-      echo "${relative_unit}: replaced ${dep_module} with ${dep_path}"
-    # Scan the domain's proto imports for other kobecal packages and point
-    # them at their local sibling module. Use find+grep (not ripgrep): the
-    # CI runners do not install rg, and a missing tool in the process
-    # substitution would silently skip the replace directives.
+      go mod edit -require="${dep_module}@v${dep_version}"
+      echo "${relative_unit}: required ${dep_module}@v${dep_version}"
+    # Scan the domain's proto imports for other kobecal packages and require
+    # them at their published versions. Use find+grep (not ripgrep): the CI
+    # runners do not install rg, and a missing tool in the process
+    # substitution would silently skip the requirement.
     done < <(find "${ROOT}/proto/kobecal/${namespace}/${domain}" -type f -name '*.proto' -exec grep -hoE 'import "kobecal/[^"]+"' {} + | sed 's/^import "//; s/"$//' | sort -u)
   )
 done < <(find "$schemas_root" -mindepth 3 -maxdepth 3 -type f -name VERSION -print | LC_ALL=C sort)

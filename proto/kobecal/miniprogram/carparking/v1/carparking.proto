@@ -283,6 +283,11 @@ message ListNearbyParkingLotsRequest {
   double longitude = 2;
   // pagination controls page size and continuation.
   kobecal.miniprogram.common.v1.Pagination pagination = 3;
+  // radius_m bounds the search to parking lots within this many meters of the
+  // anchor. Zero means "use the server default" (5000 m). Values are clamped
+  // to the supported range [100, 50000]. This lets the mini program scope a
+  // nearby search to its current city without a server round-trip.
+  optional double radius_m = 4;
 }
 
 // ListNearbyParkingLotsResponse is the output of ListNearbyParkingLots.

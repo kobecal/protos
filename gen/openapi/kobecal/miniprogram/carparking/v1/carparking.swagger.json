@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "miniprogram/carparking",
-    "version": "0.6.1"
+    "version": "0.7.0"
   },
   "tags": [
     {
@@ -16,6 +16,87 @@
     "application/json"
   ],
   "paths": {
+    "/car-parking/v1/admin/feedback": {
+      "get": {
+        "summary": "ListFeedback lists submitted feedback, newest first, so admins can review\nand track user requests and issues. Admin only.",
+        "operationId": "CarParkingService_ListFeedback",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListFeedbackResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "pagination.page_size",
+            "description": "Maximum number of items to return. Zero means \"use server default\".",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "pagination.page_token",
+            "description": "Opaque continuation token from a previous PageInfo.next_page_token. Empty\nmeans \"first page\".",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "description": "status optionally filters the list to one triage state. Unset returns all.\n\n - FEEDBACK_STATUS_UNSPECIFIED: FEEDBACK_STATUS_UNSPECIFIED is the zero value and is not valid input.\n - FEEDBACK_STATUS_OPEN: FEEDBACK_STATUS_OPEN means the feedback has not been handled yet.\n - FEEDBACK_STATUS_RESOLVED: FEEDBACK_STATUS_RESOLVED means an admin marked the feedback as handled.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "FEEDBACK_STATUS_UNSPECIFIED",
+              "FEEDBACK_STATUS_OPEN",
+              "FEEDBACK_STATUS_RESOLVED"
+            ],
+            "default": "FEEDBACK_STATUS_UNSPECIFIED"
+          }
+        ],
+        "tags": [
+          "CarParkingService"
+        ]
+      }
+    },
+    "/car-parking/v1/admin/feedback/{feedback_id}:resolve": {
+      "post": {
+        "summary": "ResolveFeedback marks feedback as handled or reopens it. Admin only.",
+        "operationId": "CarParkingService_ResolveFeedback",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ResolveFeedbackResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "feedback_id",
+            "description": "feedback_id is the id of the feedback to update. Required.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CarParkingServiceResolveFeedbackBody"
+            }
+          }
+        ],
+        "tags": [
+          "CarParkingService"
+        ]
+      }
+    },
     "/car-parking/v1/admin/outdated-reports": {
       "get": {
         "summary": "ListOutdatedReports lists parking lots with outstanding outdated reports\nso admins can verify and resolve them. Admin only.",
@@ -126,6 +207,34 @@
             "in": "query",
             "required": false,
             "type": "string"
+          }
+        ],
+        "tags": [
+          "CarParkingService"
+        ]
+      }
+    },
+    "/car-parking/v1/feedback": {
+      "post": {
+        "summary": "SubmitFeedback records a user's feature request or issue report so admins\ncan review it. The submitting user is taken from the request context.",
+        "operationId": "CarParkingService_SubmitFeedback",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SubmitFeedbackResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "SubmitFeedbackRequest is the input to SubmitFeedback.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1SubmitFeedbackRequest"
+            }
           }
         ],
         "tags": [
@@ -554,6 +663,16 @@
       "type": "object",
       "description": "ReportParkingLotOutdatedRequest is the input to ReportParkingLotOutdated."
     },
+    "CarParkingServiceResolveFeedbackBody": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/definitions/v1FeedbackStatus",
+          "description": "status is the new triage state (RESOLVED to close, OPEN to reopen)."
+        }
+      },
+      "description": "ResolveFeedbackRequest is the input to ResolveFeedback. Admin only."
+    },
     "CarParkingServiceReviewParkingLotBody": {
       "type": "object",
       "properties": {
@@ -658,6 +777,61 @@
       },
       "description": "FavoriteParkingLotResponse is the output of FavoriteParkingLot."
     },
+    "v1Feedback": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "id is the stable identifier of the feedback entry."
+        },
+        "type": {
+          "$ref": "#/definitions/v1FeedbackType",
+          "description": "type is the kind of feedback."
+        },
+        "content": {
+          "type": "string",
+          "description": "content is the user's feedback text."
+        },
+        "contact": {
+          "type": "string",
+          "description": "contact is the optional reach-back info volunteered by the user."
+        },
+        "status": {
+          "$ref": "#/definitions/v1FeedbackStatus",
+          "description": "status is the admin triage state."
+        },
+        "submitter_id": {
+          "type": "string",
+          "description": "submitter_id is the user who submitted the feedback."
+        },
+        "submitted_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "submitted_at is when the feedback was submitted."
+        }
+      },
+      "description": "Feedback is one user-submitted feedback entry."
+    },
+    "v1FeedbackStatus": {
+      "type": "string",
+      "enum": [
+        "FEEDBACK_STATUS_UNSPECIFIED",
+        "FEEDBACK_STATUS_OPEN",
+        "FEEDBACK_STATUS_RESOLVED"
+      ],
+      "default": "FEEDBACK_STATUS_UNSPECIFIED",
+      "description": "FeedbackStatus tracks the admin triage state of feedback.\n\n - FEEDBACK_STATUS_UNSPECIFIED: FEEDBACK_STATUS_UNSPECIFIED is the zero value and is not valid input.\n - FEEDBACK_STATUS_OPEN: FEEDBACK_STATUS_OPEN means the feedback has not been handled yet.\n - FEEDBACK_STATUS_RESOLVED: FEEDBACK_STATUS_RESOLVED means an admin marked the feedback as handled."
+    },
+    "v1FeedbackType": {
+      "type": "string",
+      "enum": [
+        "FEEDBACK_TYPE_UNSPECIFIED",
+        "FEEDBACK_TYPE_FEATURE_REQUEST",
+        "FEEDBACK_TYPE_ISSUE"
+      ],
+      "default": "FEEDBACK_TYPE_UNSPECIFIED",
+      "description": "FeedbackType discriminates the kind of user feedback.\n\n - FEEDBACK_TYPE_UNSPECIFIED: FEEDBACK_TYPE_UNSPECIFIED is the zero value and is not valid input.\n - FEEDBACK_TYPE_FEATURE_REQUEST: FEEDBACK_TYPE_FEATURE_REQUEST is a feature request from a user.\n - FEEDBACK_TYPE_ISSUE: FEEDBACK_TYPE_ISSUE is a problem or bug report from a user."
+    },
     "v1GetParkingLotResponse": {
       "type": "object",
       "properties": {
@@ -685,6 +859,24 @@
         }
       },
       "description": "ListFavoriteParkingLotsResponse is the output of ListFavoriteParkingLots."
+    },
+    "v1ListFeedbackResponse": {
+      "type": "object",
+      "properties": {
+        "feedback": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Feedback"
+          },
+          "description": "feedback is the page of feedback entries, newest first."
+        },
+        "page_info": {
+          "$ref": "#/definitions/v1PageInfo",
+          "description": "page_info carries pagination metadata."
+        }
+      },
+      "description": "ListFeedbackResponse is the output of ListFeedback."
     },
     "v1ListMyParkingLotsResponse": {
       "type": "object",
@@ -998,6 +1190,16 @@
       },
       "description": "ReportParkingLotOutdatedResponse is the output of\nReportParkingLotOutdated."
     },
+    "v1ResolveFeedbackResponse": {
+      "type": "object",
+      "properties": {
+        "feedback": {
+          "$ref": "#/definitions/v1Feedback",
+          "description": "feedback is the updated feedback entry."
+        }
+      },
+      "description": "ResolveFeedbackResponse returns the updated feedback entry."
+    },
     "v1ReverseGeocodeRequest": {
       "type": "object",
       "properties": {
@@ -1051,6 +1253,34 @@
         }
       },
       "description": "ReviewParkingLotResponse is the output of ReviewParkingLot."
+    },
+    "v1SubmitFeedbackRequest": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/v1FeedbackType",
+          "description": "type discriminates a feature request from an issue report. Required."
+        },
+        "content": {
+          "type": "string",
+          "description": "content is the user's free-form feedback text. Required."
+        },
+        "contact": {
+          "type": "string",
+          "description": "contact is an optional way to reach the user (e.g. a nickname or phone).\nThe submitting user is already recorded server-side; this is only for the\nuser to volunteer a way to be followed up with."
+        }
+      },
+      "description": "SubmitFeedbackRequest is the input to SubmitFeedback."
+    },
+    "v1SubmitFeedbackResponse": {
+      "type": "object",
+      "properties": {
+        "feedback": {
+          "$ref": "#/definitions/v1Feedback",
+          "description": "feedback is the stored feedback entry."
+        }
+      },
+      "description": "SubmitFeedbackResponse returns the stored feedback with its server-assigned\nid and timestamp."
     },
     "v1UnfavoriteParkingLotResponse": {
       "type": "object",

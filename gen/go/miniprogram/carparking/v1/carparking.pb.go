@@ -634,7 +634,12 @@ type ListNearbyParkingLotsRequest struct {
 	// Required.
 	Longitude float64 `protobuf:"fixed64,2,opt,name=longitude,proto3" json:"longitude,omitempty"`
 	// pagination controls page size and continuation.
-	Pagination    *v1.Pagination `protobuf:"bytes,3,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	Pagination *v1.Pagination `protobuf:"bytes,3,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	// radius_m bounds the search to parking lots within this many meters of the
+	// anchor. Zero means "use the server default" (5000 m). Values are clamped
+	// to the supported range [100, 50000]. This lets the mini program scope a
+	// nearby search to its current city without a server round-trip.
+	RadiusM       *float64 `protobuf:"fixed64,4,opt,name=radius_m,json=radiusM,proto3,oneof" json:"radius_m,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -688,6 +693,13 @@ func (x *ListNearbyParkingLotsRequest) GetPagination() *v1.Pagination {
 		return x.Pagination
 	}
 	return nil
+}
+
+func (x *ListNearbyParkingLotsRequest) GetRadiusM() float64 {
+	if x != nil && x.RadiusM != nil {
+		return *x.RadiusM
+	}
+	return 0
 }
 
 // ListNearbyParkingLotsResponse is the output of ListNearbyParkingLots.
@@ -2297,13 +2309,15 @@ const file_kobecal_miniprogram_carparking_v1_carparking_proto_rawDesc = "" +
 	"\x0fcover_image_url\x18\x05 \x01(\tR\rcoverImageUrl\x12(\n" +
 	"\x10price_image_urls\x18\x06 \x03(\tR\x0epriceImageUrls\x121\n" +
 	"\x15payment_qr_image_urls\x18\a \x03(\tR\x12paymentQrImageUrls\x12\x12\n" +
-	"\x04city\x18\b \x01(\tR\x04city\"\xa3\x01\n" +
+	"\x04city\x18\b \x01(\tR\x04city\"\xd0\x01\n" +
 	"\x1cListNearbyParkingLotsRequest\x12\x1a\n" +
 	"\blatitude\x18\x01 \x01(\x01R\blatitude\x12\x1c\n" +
 	"\tlongitude\x18\x02 \x01(\x01R\tlongitude\x12I\n" +
 	"\n" +
 	"pagination\x18\x03 \x01(\v2).kobecal.miniprogram.common.v1.PaginationR\n" +
-	"pagination\"\xbb\x01\n" +
+	"pagination\x12\x1e\n" +
+	"\bradius_m\x18\x04 \x01(\x01H\x00R\aradiusM\x88\x01\x01B\v\n" +
+	"\t_radius_m\"\xbb\x01\n" +
 	"\x1dListNearbyParkingLotsResponse\x12T\n" +
 	"\fparking_lots\x18\x01 \x03(\v21.kobecal.miniprogram.carparking.v1.ParkingLotViewR\vparkingLots\x12D\n" +
 	"\tpage_info\x18\x02 \x01(\v2'.kobecal.miniprogram.common.v1.PageInfoR\bpageInfo\"u\n" +
@@ -2561,6 +2575,7 @@ func file_kobecal_miniprogram_carparking_v1_carparking_proto_init() {
 	if File_kobecal_miniprogram_carparking_v1_carparking_proto != nil {
 		return
 	}
+	file_kobecal_miniprogram_carparking_v1_carparking_proto_msgTypes[5].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

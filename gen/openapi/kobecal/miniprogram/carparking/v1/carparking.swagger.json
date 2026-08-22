@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "miniprogram/carparking",
-    "version": "0.6.0"
+    "version": "0.6.1"
   },
   "tags": [
     {
@@ -512,6 +512,14 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "radius_m",
+            "description": "radius_m bounds the search to parking lots within this many meters of the\nanchor. Zero means \"use the server default\" (5000 m). Values are clamped\nto the supported range [100, 50000]. This lets the mini program scope a\nnearby search to its current city without a server round-trip.",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
           }
         ],
         "tags": [
